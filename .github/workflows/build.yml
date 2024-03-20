@@ -81,10 +81,31 @@ jobs:
   create-release:
     needs: build-and-tag
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+
+      - name: Fetch Tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+      - name: Get Previous Tag
+        id: prev_tag
+        run: |
+          echo "PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))" >> $GITHUB_ENV
+      
+      - name: Generate Release Notes
+        id: generate_notes
+        run: |
+          PREV_TAG=${{ env.PREV_TAG }}
+          CURRENT_TAG=$(git describe --tags --abbrev=0)
+          echo "Release notes between tags $PREV_TAG and $CURRENT_TAG:"
+          RELEASE_NOTES=$(git log $PREV_TAG..$CURRENT_TAG --oneline)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       
       - name: Download Artifacts
         uses: actions/download-artifact@v3
@@ -103,7 +124,7 @@ jobs:
           prerelease: false
           body: |
             Changes in this Release:
-            - Detailed changes or commit messages
+            ${{ env.RELEASE_NOTES }}
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
