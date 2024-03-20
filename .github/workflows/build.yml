@@ -1,0 +1,73 @@
+name: Build and Tag on Merge to Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: 'Build and Test 🚀'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.0'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Test
+        run: |
+          go test ./... -v
+        env:
+          GO111MODULE: on
+
+  build-and-tag:
+    needs: build-and-test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.0'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build
+        run: go build -o ephemyral-${{ matrix.os }}-${{ github.sha }}
+
+      - name: Create Tag
+        if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'macos-latest' }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a v${{ github.run_number }} -m "Generated tag from GitHub Actions"
+          git push --tags
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ephemyral-${{ matrix.os }}
+          path: ephemyral-${{ matrix.os }}-${{ github.sha }}
