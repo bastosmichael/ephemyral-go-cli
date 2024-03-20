@@ -15,8 +15,8 @@ examples and usage of using your build command. For example:
 
 The build command compiles your code and prepares it for deployment.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Building the project...")
-		// Here you can add your build logic, such as compiling code, copying resources, etc.
+		fmt.Fprintln(cmd.OutOrStdout(), "Building the project...")
+		// Your build logic here
 	},
 }
 
