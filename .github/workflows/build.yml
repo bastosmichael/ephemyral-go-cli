@@ -81,32 +81,16 @@ jobs:
   create-release:
     needs: build-and-tag
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
         with:
-          fetch-depth: 0 # Fetch all history for all tags and branches
-      
-      - name: Fetch Tags
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      
-      - name: Get Previous Tag
-        id: prev_tag
-        run: |
-          echo "PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))" >> $GITHUB_ENV
-      
-      - name: Generate Release Notes
-        id: generate_notes
-        run: |
-          PREV_TAG=${{ env.PREV_TAG }}
-          CURRENT_TAG=$(git describe --tags --abbrev=0)
-          echo "Release notes between tags $PREV_TAG and $CURRENT_TAG:"
-          RELEASE_NOTES=$(git log $PREV_TAG..$CURRENT_TAG --oneline)
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$RELEASE_NOTES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-      
+          path: ./artifacts
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -119,4 +103,14 @@ jobs:
           prerelease: false
           body: |
             Changes in this Release:
-            ${{ env.RELEASE_NOTES }}
+            - Detailed changes or commit messages
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/ephemyral-${{ matrix.os }}-${{ github.sha }}
+          asset_name: ephemyral-${{ matrix.os }}-${{ github.sha }}
+          asset_content_type: application/octet-stream
