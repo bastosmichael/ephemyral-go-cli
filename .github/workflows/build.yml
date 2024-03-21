@@ -112,19 +112,19 @@ jobs:
         with:
           path: ./artifacts
 
+      - name: Get current time
+        run: echo "CURRENT_TIME=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
       - name: Create Release
-        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          tag_name: release-${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
+          release_name: Release ${{ github.run_number }}-${{ github.run_attempt }} at ${{ env.CURRENT_TIME }}
           body: |
             Changes in this Release:
-            ${{ env.RELEASE_NOTES }}
+            - ${{ env.RELEASE_NOTES }}
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
