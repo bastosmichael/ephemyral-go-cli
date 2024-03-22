@@ -1,32 +1,21 @@
-// build_test.go
-package cmd
+package cmd_test
 
 import (
-	"bytes"
-	"testing"
-
-	"github.com/spf13/cobra"
+    "ephemyral/cmd"
+    "testing"
 )
 
-// executeCommand executes a cobra.Command with given arguments, and returns the output
-func executeCommand(root *cobra.Command, args ...string) (string, error) {
-	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
-	root.SetArgs(args)
+func TestGenerateBuildCommand(t *testing.T) {
+    // This is a basic example. Your test setup might need adjustments based on your environment.
+    dir := "testData" // Assuming testData contains mock files for testing.
+    expectedCommand := "echo 'build command'" // This is a mock expected output.
 
-	err := root.Execute()
-	return buf.String(), err
-}
+    command, err := cmd.GenerateBuildCommand(dir)
+    if err != nil {
+        t.Fatalf("Expected no error, got %v", err)
+    }
 
-// TestBuildCommand tests the build command
-func TestBuildCommand(t *testing.T) {
-	output, err := executeCommand(rootCmd, "build")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	expected := "Building the project...\n" // Update this based on your actual command output
-	if output != expected {
-		t.Errorf("Expected output %q but got %q", expected, output)
-	}
+    if command != expectedCommand {
+        t.Errorf("Expected %s, got %s", expectedCommand, command)
+    }
 }

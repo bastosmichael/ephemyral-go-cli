@@ -1,10 +1,8 @@
-
-
 // build.go
 package cmd
 
 import (
-    gpt3client "ephemyral/pkg"
+    gpt4client "ephemyral/pkg"
     "fmt"
     "io/ioutil"
     "strings"
@@ -12,52 +10,48 @@ import (
     "github.com/spf13/cobra"
 )
 
+// Extracting the core functionality into a separate function for testing.
+func GenerateBuildCommand(directory string) (string, error) {
+    files, err := ioutil.ReadDir(directory)
+    if err != nil {
+        return "", err // Return error to be handled/tested.
+    }
+
+    var fullPrompt strings.Builder
+    for _, file := range files {
+        fileContent, err := ioutil.ReadFile(directory + "/" + file.Name())
+        if err != nil {
+            return "", err // Return error to be handled/tested.
+        }
+        fullPrompt.WriteString(string(fileContent) + "\n\n")
+    }
+
+    gpt4client.SetDebug(true)
+    buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt.String())
+    if err != nil {
+        return "", err // Return error to be handled/tested.
+    }
+
+    if strings.TrimSpace(buildCommand) == "" {
+        return "", fmt.Errorf("received empty build command") // Using error to signify empty command.
+    }
+
+    // Typically, you'd run the build command here, but for testing, we'll just return it.
+    return buildCommand, nil
+}
+
 var buildCmd = &cobra.Command{
     Use:   "build [directory]",
-    Short: "Build code directory",
-    Long: `This command reads all files in a given directory and uses gpt3client
-to return only the command necessary to build the code directory and runs that command to successfully check for a build.`,
     Args: cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
-        directory := args[0]
-
-        // Read all files in the given directory.
-        files, err := ioutil.ReadDir(directory)
+        buildCommand, err := GenerateBuildCommand(args[0])
         if err != nil {
-            fmt.Println("Error reading directory:", err)
+            fmt.Println("Error:", err)
             return
         }
-
-        // Prepare the prompt by merging all files' content into one string.
-        // Here you would 'vectorize' or otherwise prepare your file content if necessary.
-        // Adjust this to meet the API's limitations as needed.
-        var fullPrompt strings.Builder
-        for _, file := range files {
-            fileContent, err := ioutil.ReadFile(directory + "/" + file.Name())
-            if err != nil {
-                fmt.Println("Error reading file:", err)
-                return
-            }
-            fullPrompt.WriteString(string(fileContent) + "\n\n")
-        }
-
-        gpt3client.SetDebug(true)
-        buildCommand, err := gpt3client.GetLLMSuggestion(fullPrompt.String())
-        if err != nil {
-            fmt.Println("Error getting suggestion from LLM:", err)
-            return
-        }
-
-        // Check if the build command is valid or as expected. This is a simplification.
-        // In a real scenario, you'd need more robust handling here.
-        if strings.TrimSpace(buildCommand) == "" {
-            fmt.Println("Received empty build command.")
-            return
-        }
-
-        // Run the build command.
-        // TODO: Implement build command execution.
-        fmt.Println("Successfully ran build command:", buildCommand)
+        
+        fmt.Println("Successfully generated build command:", buildCommand)
+        // Implement build command execution logic.
     },
 }
 

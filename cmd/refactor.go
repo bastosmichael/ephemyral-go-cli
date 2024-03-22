@@ -4,7 +4,7 @@
 package cmd
 
 import (
-    gpt3client "ephemyral/pkg"
+    gpt4client "ephemyral/pkg"
     "fmt"
     "io/ioutil"
     "strings"
@@ -39,8 +39,8 @@ and applying the suggested changes entirely, replacing the file content.`,
         // Adjust this to meet the API's limitations as needed.
         fullPrompt := fmt.Sprintf("Refactor the following code based on this instruction: '%s'\n\n%s", userPrompt, string(fileContent))
 
-        gpt3client.SetDebug(true)
-        refactoredContent, err := gpt3client.GetLLMSuggestion(fullPrompt)
+        gpt4client.SetDebug(true)
+        refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
         if err != nil {
             fmt.Println("Error getting suggestion from LLM:", err)
             return
