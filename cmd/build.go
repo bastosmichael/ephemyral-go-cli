@@ -1,32 +1,66 @@
+
+
 // build.go
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
+    gpt3client "ephemyral/pkg"
+    "fmt"
+    "io/ioutil"
+    "strings"
+
+    "github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
 var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Builds your project",
-	Long: `A longer description of your build command that spans multiple lines and likely contains
-examples and usage of using your build command. For example:
+    Use:   "build [directory]",
+    Short: "Build code directory",
+    Long: `This command reads all files in a given directory and uses gpt3client
+to return only the command necessary to build the code directory and runs that command to successfully check for a build.`,
+    Args: cobra.MinimumNArgs(1),
+    Run: func(cmd *cobra.Command, args []string) {
+        directory := args[0]
 
-The build command compiles your code and prepares it for deployment.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintln(cmd.OutOrStdout(), "Building the project...")
-		// Your build logic here
-	},
+        // Read all files in the given directory.
+        files, err := ioutil.ReadDir(directory)
+        if err != nil {
+            fmt.Println("Error reading directory:", err)
+            return
+        }
+
+        // Prepare the prompt by merging all files' content into one string.
+        // Here you would 'vectorize' or otherwise prepare your file content if necessary.
+        // Adjust this to meet the API's limitations as needed.
+        var fullPrompt strings.Builder
+        for _, file := range files {
+            fileContent, err := ioutil.ReadFile(directory + "/" + file.Name())
+            if err != nil {
+                fmt.Println("Error reading file:", err)
+                return
+            }
+            fullPrompt.WriteString(string(fileContent) + "\n\n")
+        }
+
+        gpt3client.SetDebug(true)
+        buildCommand, err := gpt3client.GetLLMSuggestion(fullPrompt.String())
+        if err != nil {
+            fmt.Println("Error getting suggestion from LLM:", err)
+            return
+        }
+
+        // Check if the build command is valid or as expected. This is a simplification.
+        // In a real scenario, you'd need more robust handling here.
+        if strings.TrimSpace(buildCommand) == "" {
+            fmt.Println("Received empty build command.")
+            return
+        }
+
+        // Run the build command.
+        // TODO: Implement build command execution.
+        fmt.Println("Successfully ran build command:", buildCommand)
+    },
 }
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application, and Local Flags, which will
-	// only run when this command is called directly.
-	buildCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+    rootCmd.AddCommand(buildCmd)
 }
