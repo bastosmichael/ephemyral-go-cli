@@ -1,52 +1,78 @@
+
+
 // refactor.go
 package cmd
 
 import (
-	gpt3client "ephemyral/pkg"
-	"fmt"
-	"io/ioutil"
+    gpt3client "ephemyral/pkg"
+    "fmt"
+    "io/ioutil"
+    "strings"
 
-	"github.com/spf13/cobra"
+    "github.com/spf13/cobra"
 )
 
 var refactorCmd = &cobra.Command{
-	Use:   "refactor [file path] [prompt]",
-	Short: "Refactor a given file based on a prompt",
-	Long:  `This command refactors a given file by sending a prompt to an LLM and applying the suggested changes.`,
-	Args:  cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		filePath := args[0]
-		prompt := args[1]
+    Use:   "refactor [file path] [prompt] [new file path]",
+    Short: "Refactor a given file based on a prompt and output to a new file",
+    Long: `This command refactors a given file by sending a prompt to an LLM 
+and applying the suggested changes entirely, replacing the file content.`,
+    Args: cobra.MinimumNArgs(2),
+    Run: func(cmd *cobra.Command, args []string) {
+        filePath := args[0]
+        userPrompt := args[1]
+        newFilePath := ""
+        if len(args) > 2 {
+            newFilePath = args[2]
+        }
 
-		gpt3client.SetDebug(true)
-		suggestion, err := gpt3client.GetLLMSuggestion(prompt)
-		if err != nil {
-			fmt.Println("Error getting suggestion from LLM:", err)
-			return
-		}
+        // Read the file to be refactored.
+        fileContent, err := ioutil.ReadFile(filePath)
+        if err != nil {
+            fmt.Println("Error reading file:", err)
+            return
+        }
 
-		// Read the file to be refactored.
-		fileContent, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			fmt.Println("Error reading file:", err)
-			return
-		}
+        // Prepare the prompt by merging the user prompt with the file content.
+        // Here you would 'vectorize' or otherwise prepare your file content if necessary.
+        // For simplicity, we're directly using the content as part of the prompt.
+        // Adjust this to meet the API's limitations as needed.
+        fullPrompt := fmt.Sprintf("Refactor the following code based on this instruction: '%s'\n\n%s", userPrompt, string(fileContent))
 
-		// Apply the suggestion to the file content.
-		// This is a simplification. You'll need to parse the suggestion and apply it accordingly.
-		refactoredContent := string(fileContent) + "\n\n// Suggestion from LLM:\n" + suggestion
+        gpt3client.SetDebug(true)
+        refactoredContent, err := gpt3client.GetLLMSuggestion(fullPrompt)
+        if err != nil {
+            fmt.Println("Error getting suggestion from LLM:", err)
+            return
+        }
 
-		// Write the refactored content back to the file.
-		err = ioutil.WriteFile(filePath, []byte(refactoredContent), 0644)
-		if err != nil {
-			fmt.Println("Error writing file:", err)
-			return
-		}
+        // Check if the refactored content is valid or as expected. This is a simplification.
+        // In a real scenario, you'd need more robust handling here.
+        if strings.TrimSpace(refactoredContent) == "" {
+            fmt.Println("Received empty refactored content.")
+            return
+        }
 
-		fmt.Println("File refactored successfully.")
-	},
+        // If a new file path was provided, write the refactored content to that file.
+        // Otherwise, overwrite the original file.
+        if newFilePath != "" {
+            err = ioutil.WriteFile(newFilePath, []byte(refactoredContent), 0644)
+            if err != nil {
+                fmt.Println("Error writing file:", err)
+                return
+            }
+        } else {
+            err = ioutil.WriteFile(filePath, []byte(refactoredContent), 0644)
+            if err != nil {
+                fmt.Println("Error writing file:", err)
+                return
+            }
+        }
+
+        fmt.Println("File refactored successfully.")
+    },
 }
 
 func init() {
-	rootCmd.AddCommand(refactorCmd)
+    rootCmd.AddCommand(refactorCmd)
 }
