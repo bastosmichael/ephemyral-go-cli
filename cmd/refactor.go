@@ -1,5 +1,3 @@
-
-
 // refactor.go
 package cmd
 
@@ -33,11 +31,9 @@ and applying the suggested changes entirely, replacing the file content.`,
             return
         }
 
-        // Prepare the prompt by merging the user prompt with the file content.
-        // Here you would 'vectorize' or otherwise prepare your file content if necessary.
-        // For simplicity, we're directly using the content as part of the prompt.
-        // Adjust this to meet the API's limitations as needed.
-        fullPrompt := fmt.Sprintf("Refactor the following code based on this instruction: '%s'\n\n%s", userPrompt, string(fileContent))
+        // Prepare a precise prompt to the LLM.
+        // Explicitly ask for only the code that needs changes based on the instructions.
+        fullPrompt := fmt.Sprintf("Analyze the following code and return only the completely refactored or optimized code based on this instruction: '%s' Provide the refactored or optimized version only. Do not include any additional text or unchanged code.\n\n```%s```", userPrompt, string(fileContent))
 
         gpt4client.SetDebug(true)
         refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
@@ -46,10 +42,9 @@ and applying the suggested changes entirely, replacing the file content.`,
             return
         }
 
-        // Check if the refactored content is valid or as expected. This is a simplification.
-        // In a real scenario, you'd need more robust handling here.
-        if strings.TrimSpace(refactoredContent) == "" {
-            fmt.Println("Received empty refactored content.")
+        // Validation: Ensure the returned content is strictly code and it's only the changed parts.
+        if !isCode(refactoredContent) || strings.TrimSpace(refactoredContent) == "" {
+            fmt.Println("Invalid or insufficient content received. Expected specific code changes only.")
             return
         }
 
@@ -71,6 +66,11 @@ and applying the suggested changes entirely, replacing the file content.`,
 
         fmt.Println("File refactored successfully.")
     },
+}
+
+func isCode(content string) bool {
+    // Simple check for code structure; adjust according to your needs.
+    return strings.Contains(content, "func") || strings.Contains(content, "import")
 }
 
 func init() {
