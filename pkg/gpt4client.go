@@ -1,37 +1,33 @@
-// gpt4client.go
 package gpt4client
 
 import (
     "bytes"
+    "crypto/tls"
     "encoding/json"
     "fmt"
     "io/ioutil"
     "net/http"
     "os"
+    "time"
 
     "github.com/joho/godotenv"
 )
 
-// OpenAI Chat Completions URL for GPT-4
 const apiURL = "https://api.openai.com/v1/chat/completions"
 
 var debug bool = false
 
-// SetDebug enables or disables debug mode
 func SetDebug(enabled bool) {
     debug = enabled
 }
 
-// DebugLog prints debug information if debug mode is enabled
 func DebugLog(format string, v ...interface{}) {
     if debug {
         fmt.Printf(format+"\n", v...)
     }
 }
 
-// GetGPT4ResponseWithPrompt sends a single prompt to GPT-4 and returns the response.
 func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
-    // Load the .env file
     if err := godotenv.Load(); err != nil {
         DebugLog("Error loading .env file: %v", err)
     }
@@ -41,20 +37,13 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
         return "", fmt.Errorf("API key not set")
     }
 
-    // Constructing messages from the provided prompt
     messages := []map[string]interface{}{
-        {
-            "role":    "system",
-            "content": "You are a helpful assistant.",
-        },
-        {
-            "role":    "user",
-            "content": prompt,
-        },
+        {"role": "system", "content": "You are writing software code."},
+        {"role": "user", "content": prompt},
     }
 
     payload := map[string]interface{}{
-        "model":    "gpt-4-turbo-preview", // Use gpt-4-turbo-preview or other appropriate GPT-4 model
+        "model":    "gpt-4-turbo-preview",
         "messages": messages,
     }
     payloadBytes, err := json.Marshal(payload)
@@ -64,6 +53,22 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
 
     DebugLog("Request payload: %s", string(payloadBytes))
 
+    // Custom TLS configuration
+    tlsConfig := &tls.Config{
+        MinVersion:               tls.VersionTLS12,
+        CipherSuites:             []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+        PreferServerCipherSuites: true,
+        InsecureSkipVerify:       false,
+    }
+
+    client := &http.Client{
+        Transport: &http.Transport{
+            TLSClientConfig: tlsConfig,
+            Proxy:           http.ProxyFromEnvironment,
+        },
+        Timeout: 30 * time.Second,
+    }
+
     req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(payloadBytes))
     if err != nil {
         return "", fmt.Errorf("error creating request: %w", err)
@@ -72,7 +77,6 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("Authorization", "Bearer "+apiKey)
 
-    client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
         return "", fmt.Errorf("error sending request to the API: %w", err)
