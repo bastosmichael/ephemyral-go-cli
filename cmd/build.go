@@ -2,31 +2,59 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
+    gpt4client "ephemyral/pkg"
+    "fmt"
+    "io/ioutil"
+    "strings"
+
+    "github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
-var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Builds your project",
-	Long: `A longer description of your build command that spans multiple lines and likely contains
-examples and usage of using your build command. For example:
+// Extracting the core functionality into a separate function for testing.
+func GenerateBuildCommand(directory string) (string, error) {
+    files, err := ioutil.ReadDir(directory)
+    if err != nil {
+        return "", err // Return error to be handled/tested.
+    }
 
-The build command compiles your code and prepares it for deployment.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Fprintln(cmd.OutOrStdout(), "Building the project...")
-		// Your build logic here
-	},
+    var fullPrompt strings.Builder
+    for _, file := range files {
+        fileContent, err := ioutil.ReadFile(directory + "/" + file.Name())
+        if err != nil {
+            return "", err // Return error to be handled/tested.
+        }
+        fullPrompt.WriteString(string(fileContent) + "\n\n")
+    }
+
+    gpt4client.SetDebug(true)
+    buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt.String())
+    if err != nil {
+        return "", err // Return error to be handled/tested.
+    }
+
+    if strings.TrimSpace(buildCommand) == "" {
+        return "", fmt.Errorf("received empty build command") // Using error to signify empty command.
+    }
+
+    // Typically, you'd run the build command here, but for testing, we'll just return it.
+    return buildCommand, nil
+}
+
+var buildCmd = &cobra.Command{
+    Use:   "build [directory]",
+    Args: cobra.MinimumNArgs(1),
+    Run: func(cmd *cobra.Command, args []string) {
+        buildCommand, err := GenerateBuildCommand(args[0])
+        if err != nil {
+            fmt.Println("Error:", err)
+            return
+        }
+        
+        fmt.Println("Successfully generated build command:", buildCommand)
+        // Implement build command execution logic.
+    },
 }
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application, and Local Flags, which will
-	// only run when this command is called directly.
-	buildCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+    rootCmd.AddCommand(buildCmd)
 }
