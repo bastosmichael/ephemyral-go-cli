@@ -15,11 +15,15 @@ var refactorCmd = &cobra.Command{
     Short: "Refactor a given file based on a prompt and output to a new file",
     Long: `This command refactors a given file by sending a prompt to an LLM 
 and applying the suggested changes entirely, replacing the file content.`,
-    Args: cobra.MinimumNArgs(2),
+    Args: cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         filePath := args[0]
-        userPrompt := args[1]
+        userPrompt := "optimize the code for better performance and readability"
         newFilePath := ""
+
+        if len(args) > 1 {
+            userPrompt = args[1]
+        }
         if len(args) > 2 {
             newFilePath = args[2]
         }
@@ -32,7 +36,7 @@ and applying the suggested changes entirely, replacing the file content.`,
         }
 
         // Prepare a precise prompt to the LLM.
-        fullPrompt := fmt.Sprintf("Analyze the following code and return only the completely refactored or optimized code based on this instruction: '%s' Provide the refactored or optimized version only. Do not include any additional text or unchanged code.\n\n%s", userPrompt, string(fileContent))
+        fullPrompt := fmt.Sprintf("Analyze the following code and return only the completely refactored or optimized code based on this instruction: '%s' Provide the refactored or optimized version only. Do not include any additional text or unchanged code.\n\n```%s```", userPrompt, string(fileContent))
 
         gpt4client.SetDebug(true)
         refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
