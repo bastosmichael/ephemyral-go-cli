@@ -1,10 +1,11 @@
-// init.go
 package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -14,8 +15,31 @@ func init() {
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new ephemyral task",
-	Long:  `This command initializes a new ephemyral task.`,
+	Long:  `This command initializes a new ephemyral task and either finds or creates a .ephemyral file.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Ephemyral task initialized")
+		filename := ".ephemyral"
+
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			fmt.Println("No .ephemyral file found, creating one...")
+			content := struct {
+				BuildCommand string `yaml:"build_command"`
+				TestCommand  string `yaml:"test_command"`
+			}{}
+
+			data, err := yaml.Marshal(&content)
+			if err != nil {
+				fmt.Printf("Error creating YAML content: %v\n", err)
+				return
+			}
+
+			if err := os.WriteFile(filename, data, 0644); err != nil {
+				fmt.Printf("Error writing .ephemyral file: %v\n", err)
+				return
+			}
+
+			fmt.Println(".ephemyral file created")
+		} else {
+			fmt.Println("Ephemyral task initialized, .ephemyral file found")
+		}
 	},
 }
