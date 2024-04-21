@@ -4,7 +4,10 @@ package cmd
 import (
     gpt4client "ephemyral/pkg"
     "fmt"
+    "io/fs"
     "io/ioutil"
+    "os"
+    "path/filepath"
     "strings"
 
     "github.com/spf13/cobra"
@@ -12,76 +15,100 @@ import (
 
 var refactorCmd = &cobra.Command{
     Use:   "refactor [file path] [prompt] [new file path]",
-    Short: "Refactor a given file based on a prompt and output to a new file",
-    Long: `This command refactors a given file by sending a prompt to an LLM 
-and applying the suggested changes entirely, replacing the file content.`,
+    Short: "Refactor a given file or all files in a directory based on a prompt and output to a new location",
+    Long: `This command refactors a given file or all files in a directory by sending a prompt to an LLM 
+and applying the suggested changes, replacing the file content or creating new files in the specified directory.`,
     Args: cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         filePath := args[0]
-        userPrompt := "optimize the code for better performance and readability"
-        newFilePath := ""
 
-        if len(args) > 1 {
-            userPrompt = args[1]
+        // Default prompt if userPrompt is not provided
+        userPrompt := "Optimize the code for better performance and readability."
+        
+        if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
+            userPrompt = args[1] // Use the provided prompt if available
         }
+
+        newFilePath := ""
         if len(args) > 2 {
             newFilePath = args[2]
         }
 
-        // Read the file to be refactored.
-        fileContent, err := ioutil.ReadFile(filePath)
+        // Check if the provided filePath is a directory
+        fileInfo, err := os.Stat(filePath)
         if err != nil {
-            fmt.Println("Error reading file:", err)
+            fmt.Println("Error accessing specified path:", err)
             return
         }
 
-        // Prepare a precise prompt to the LLM.
-        fullPrompt := fmt.Sprintf("Analyze the following code and return only the completely refactored or optimized code based on this instruction: '%s' Provide the refactored or optimized version only. Do not include any additional text or unchanged code.\n\n```%s```", userPrompt, string(fileContent))
-
-        gpt4client.SetDebug(true)
-        refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
-        if err != nil {
-            fmt.Println("Error getting suggestion from LLM:", err)
-            return
-        }
-
-        // Filter out any lines containing triple backticks
-        refactoredContent = filterOutCodeBlocks(refactoredContent)
-
-        // Validation: Ensure the returned content is strictly code and it's only the changed parts.
-        if !isCode(refactoredContent) || strings.TrimSpace(refactoredContent) == "" {
-            fmt.Println("Invalid or insufficient content received. Expected specific code changes only.")
-            return
-        }
-
-        // If a new file path was provided, write the refactored content to that file.
-        // Otherwise, overwrite the original file.
-        if newFilePath != "" {
-            err = ioutil.WriteFile(newFilePath, []byte(refactoredContent), 0644)
-            if err != nil {
-                fmt.Println("Error writing file:", err)
-                return
-            }
+        if fileInfo.IsDir() {
+            // Handle directory
+            filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+                if err != nil {
+                    fmt.Println("Error accessing path during walk:", path, err)
+                    return err
+                }
+                if !info.IsDir() {
+                    refactorFile(path, userPrompt, newFilePath)
+                }
+                return nil
+            })
         } else {
-            err = ioutil.WriteFile(filePath, []byte(refactoredContent), 0644)
-            if err != nil {
-                fmt.Println("Error writing file:", err)
-                return
-            }
+            // Handle single file
+            refactorFile(filePath, userPrompt, newFilePath)
         }
-
-        fmt.Println("File refactored successfully.")
     },
 }
 
+func refactorFile(filePath, userPrompt, newFilePath string) {
+    fileContent, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        fmt.Println("Error reading file:", err)
+        return
+    }
+
+    fullPrompt := fmt.Sprintf("Analyze the following code and return only the refactored or optimized code based on this instruction: '%s'. Provide the refactored version only, without extra text or unchanged code.\n\n%s", userPrompt, string(fileContent))
+
+    gpt4client.SetDebug(true)
+    refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+    if err != nil {
+        fmt.Println("Error getting suggestion from LLM:", err)
+        return
+    }
+
+    // Filter out lines with triple backticks
+    refactoredContent = filterOutCodeBlocks(refactoredContent)
+
+    if !isCode(refactoredContent) || strings.TrimSpace(refactoredContent) == "" {
+        fmt.Println("Invalid or insufficient content received. Expected specific code changes only.")
+        return
+    }
+
+    targetFilePath := filePath
+    if newFilePath != "" {
+        if fileInfo, _ := os.Stat(newFilePath); fileInfo != nil && fileInfo.IsDir() {
+            targetFilePath = filepath.Join(newFilePath, filepath.Base(filePath))
+        } else {
+            targetFilePath = newFilePath
+        }
+    }
+
+    err = ioutil.WriteFile(targetFilePath, []byte(refactoredContent), 0644)
+    if err != nil {
+        fmt.Println("Error writing file:", err)
+        return
+    }
+
+    fmt.Println("File refactored successfully:", targetFilePath)
+}
+
 func isCode(content string) bool {
-    // Simple check for code structure; adjust according to your needs.
     return strings.Contains(content, "func") || strings.Contains(content, "import")
 }
 
 func filterOutCodeBlocks(content string) string {
     lines := strings.Split(content, "\n")
-    filteredLines := []string{}
+    filteredLines := make([]string, 0)
     for _, line := range lines {
         if !strings.Contains(line, "```") {
             filteredLines = append(filteredLines, line)
