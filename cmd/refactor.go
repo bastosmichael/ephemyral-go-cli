@@ -67,7 +67,12 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
         return
     }
 
-    fullPrompt := fmt.Sprintf("Analyze the following code and return only the refactored or optimized code based on this instruction: '%s'. Provide the refactored version only, without extra text or unchanged code.\n\n%s", userPrompt, string(fileContent))
+    fullPrompt := fmt.Sprintf(
+        "Analyze the following code and return only the refactored or optimized code based on this instruction: '%s'. " +
+        "Provide the refactored version only, without extra text or unchanged code.\n\n```%s```",
+        userPrompt,
+        string(fileContent),
+    )
 
     gpt4client.SetDebug(true)
     refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
