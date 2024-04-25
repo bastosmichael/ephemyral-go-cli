@@ -74,8 +74,8 @@ jobs:
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ephemyral-${{ runner.os }}-${{ github.sha }}
-          path: ephemyral-${{ runner.os }}-${{ github.sha }}
+          name: ephemyral-${{ runner.os }}
+          path: ephemyral-${{ runner.os }}
 
       - name: Fetch Tags
         run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
