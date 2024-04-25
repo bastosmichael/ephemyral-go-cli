@@ -30,9 +30,11 @@ var initCmd = &cobra.Command{
 			content := struct {
 				BuildCommand string `yaml:"build_command"`
 				TestCommand  string `yaml:"test_command"`
+				LintCommand  string `yaml:"lint_command"`
 			}{
 				BuildCommand: "", // Placeholder for build command
 				TestCommand:  "", // Placeholder for test command
+				LintCommand:  "", // Placeholder for lint command
 			}
 
 			// Marshal the content into YAML format

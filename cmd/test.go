@@ -3,8 +3,6 @@ package cmd
 
 import (
     "fmt"
-    "os"
-    "path/filepath"
     "strings"
 
     "github.com/spf13/cobra"
@@ -13,28 +11,7 @@ import (
 
 // generateTestCommand generates a test command based on the file structure in the directory.
 func generateTestCommand(directory string) (string, error) {
-    var filesList []string
-    // Get all files in the root directory and subdirectories.
-    err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-
-        if info.IsDir() {
-            if strings.HasSuffix(info.Name(), ".git") {
-                return filepath.SkipDir
-            }
-        } else {
-            relativePath, err := filepath.Rel(directory, path)
-            if err != nil {
-                return err
-            }
-            filesList = append(filesList, relativePath)
-        }
-
-        return nil
-    })
-
+    filesList, err := getFileList(directory)
     if err != nil {
         return "", err
     }

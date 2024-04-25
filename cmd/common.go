@@ -4,6 +4,7 @@ package cmd
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -13,6 +14,53 @@ import (
 type EphemyralFile struct {
     BuildCommand string `yaml:"build_command"`
     TestCommand  string `yaml:"test_command"`
+    LintCommand  string `yaml:"lint_command"`
+}
+
+// getFileList retrieves a list of all non-directory file names in the specified directory and its subdirectories,
+// skipping specified directories like ".git".
+func getFileList(directory string) ([]string, error) {
+    var filesList []string
+
+    // Read the files in the root directory.
+    rootFiles, err := os.ReadDir(directory)
+    if err != nil {
+        return nil, err
+    }
+
+    // Add non-directory files from the root directory to the list.
+    for _, file := range rootFiles {
+        if !file.IsDir() {
+            filesList = append(filesList, file.Name())
+        }
+    }
+
+    // Walk through the directory and its subdirectories.
+    err = filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        if info.IsDir() {
+            if strings.HasSuffix(info.Name(), ".git") {
+                return filepath.SkipDir
+            }
+        } else {
+            relativePath, err := filepath.Rel(directory, path)
+            if err != nil {
+                return err
+            }
+            filesList = append(filesList, relativePath)
+        }
+
+        return nil
+    })
+
+    if err != nil {
+        return nil, err
+    }
+
+    return filesList, nil
 }
 
 // executeBuildCommand executes the build command using os/exec.
@@ -56,6 +104,8 @@ func getExistingCommand(directory, key string) (string, error) {
         return ephemyral.BuildCommand, nil
     } else if key == "test" {
         return ephemyral.TestCommand, nil
+    } else if key == "lint" {
+        return ephemyral.LintCommand, nil
     }
 
     return "", nil
@@ -81,6 +131,8 @@ func updateEphemyralCommand(directory, key, command string) error {
         ephemyral.BuildCommand = command
     } else if key == "test" {
         ephemyral.TestCommand = command
+    } else if key == "lint" {
+        ephemyral.LintCommand = command
     }
 
     data, err := yaml.Marshal(&ephemyral)
