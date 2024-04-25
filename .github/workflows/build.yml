@@ -37,8 +37,40 @@ jobs:
         env:
           GO111MODULE: on
 
-  tag-and-release:
+  build-and-upload:
     needs: build-and-test
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.0'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build
+        run: go build -o ephemyral-${{ runner.os }}
+
+      - name: Create Release Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ephemyral-${{ runner.os }}
+          path: ephemyral-${{ runner.os }}
+
+  tag-and-release-and-upload:
+    needs: build-and-upload
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -75,42 +107,6 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-  build-and-upload:
-    needs: tag-and-release
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.22.0'
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Build
-        run: go build -o ephemyral-${{ runner.os }}
-
-      - name: Create Release Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ephemyral-${{ runner.os }}
-          path: ephemyral-${{ runner.os }}
-
-  release-upload-assets:
-    needs: [tag-and-release, build-and-upload]
-    runs-on: ubuntu-latest
-    steps:
       - name: Download Release Artifact (macOS)
         uses: actions/download-artifact@v3
         with:
