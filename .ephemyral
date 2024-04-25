@@ -1,2 +1,2 @@
-build_command: "go build"
-test_command: ""
+build_command: go build
+test_command: go test ./...

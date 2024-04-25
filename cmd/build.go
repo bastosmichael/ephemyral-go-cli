@@ -5,39 +5,11 @@ import (
     gpt4client "ephemyral/pkg"
     "fmt"
     "os"
-    "os/exec"
     "path/filepath"
     "strings"
 
     "github.com/spf13/cobra"
-    "gopkg.in/yaml.v2"
 )
-
-// EphemyralFile represents the structure of the .ephemyral YAML file.
-type EphemyralFile struct {
-    BuildCommand string `yaml:"build_command"`
-    TestCommand  string `yaml:"test_command"`
-}
-
-// getExistingBuildCommand reads the existing build command from the .ephemyral file.
-func getExistingBuildCommand(directory string) (string, error) {
-    filename := directory + "/.ephemyral"
-    if _, err := os.Stat(filename); os.IsNotExist(err) {
-        return "", nil
-    }
-
-    data, err := os.ReadFile(filename)
-    if err != nil {
-        return "", err
-    }
-
-    var ephemyral EphemyralFile
-    if err := yaml.Unmarshal(data, &ephemyral); err != nil {
-        return "", err
-    }
-
-    return ephemyral.BuildCommand, nil
-}
 
 // generateBuildCommand generates a build command by listing all files in the root directory and subdirectories.
 func generateBuildCommand(directory string) (string, error) {
@@ -102,59 +74,13 @@ func generateBuildCommand(directory string) (string, error) {
     return buildCommand, nil
 }
 
-// updateEphemyralBuildCommand updates the .ephemyral file with a new build command.
-func updateEphemyralBuildCommand(directory, buildCommand string) error {
-    filename := directory + "/.ephemyral"
-
-    var ephemyral EphemyralFile
-    if _, err := os.Stat(filename); !os.IsNotExist(err) {
-        data, err := os.ReadFile(filename)
-        if err != nil {
-            return err
-        }
-
-        if err := yaml.Unmarshal(data, &ephemyral); err != nil {
-            return err
-        }
-    }
-
-    ephemyral.BuildCommand = buildCommand
-
-    data, err := yaml.Marshal(&ephemyral)
-    if err != nil {
-        return err
-    }
-
-    return os.WriteFile(filename, data, 0644) // Correct the WriteFile function call.
-}
-
-// executeBuildCommand executes the build command using os/exec.
-func executeBuildCommand(directory, buildCommand string) error {
-    // Create a new command from the buildCommand string.
-    cmd := exec.Command("bash", "-c", buildCommand)
-
-    // Set the command's working directory to the specified one.
-    cmd.Dir = directory
-
-    // Redirect output to the console (or you could handle it in other ways).
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-
-    // Execute the command and check for errors.
-    if err := cmd.Run(); err != nil {
-        return err
-    }
-
-    return nil
-}
-
 var buildCmd = &cobra.Command{
     Use:   "build [directory]",
     Args: cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         directory := args[0]
 
-        existingBuildCommand, err := getExistingBuildCommand(directory)
+        existingBuildCommand, err := getExistingCommand(directory, "build")
         if err != nil {
             fmt.Println("Error reading .ephemyral file:", err)
             return
@@ -162,7 +88,7 @@ var buildCmd = &cobra.Command{
 
         if existingBuildCommand != "" {
             fmt.Println("Running existing build command:", existingBuildCommand)
-            if err := executeBuildCommand(directory, existingBuildCommand); err != nil {
+            if err := executeCommand(directory, existingBuildCommand); err != nil {
                 fmt.Println("Error executing new build command:", err)
                 return
             }
@@ -178,7 +104,7 @@ var buildCmd = &cobra.Command{
 
         refactoredBuildCommand := filterOutCodeBlocks(buildCommand)
 
-        if err := updateEphemyralBuildCommand(directory, refactoredBuildCommand); err != nil {
+        if err := updateEphemyralCommand(directory, "build", refactoredBuildCommand); err != nil {
             fmt.Println("Error updating .ephemyral file:", err)
             return
         }
@@ -186,7 +112,7 @@ var buildCmd = &cobra.Command{
         fmt.Println("Successfully generated and updated build command:", refactoredBuildCommand)
         
         // Execute the new build command.
-        if err := executeBuildCommand(directory, buildCommand); err != nil {
+        if err := executeCommand(directory, buildCommand); err != nil {
             fmt.Println("Error executing new build command:", err)
         }
     },
