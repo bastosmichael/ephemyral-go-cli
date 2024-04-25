@@ -138,7 +138,7 @@ jobs:
       - name: Download Release Artifact (Windows)
         uses: actions/download-artifact@v3
         with:
-          name: ephemyral-Windows
+          name: ephemyral-Windows-amd64
           path: windows
 
       - name: Create Release
@@ -199,6 +199,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: windows/ephemyral-Windows
-          asset_name: ephemyral-Windows
+          asset_path: windows/ephemyral-Windows-amd64
+          asset_name: ephemyral-Windows-amd64
           asset_content_type: application/octet-stream
