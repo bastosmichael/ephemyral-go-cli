@@ -5,35 +5,34 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - 'v\*'
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-
   build-and-test:
     name: 'Build and Test 🚀'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.22.0'
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    - name: Test
-      run: go test ./... -v
-      env:
-        GO111MODULE: on
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.0'
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Test
+        run: go test ./... -v
+        env:
+          GO111MODULE: on
 
   build-tag-and-release:
     needs: build-and-test
@@ -42,66 +41,61 @@ jobs:
         os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Configure Git
-      run: |
-        git config user.email "action@github.com"
-        git config user.name "GitHub Action"
-    - name: Set up Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.22.0'
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    - name: Build
-      run: go build -o ephemyral-${{ runner.os }}-${{ github.sha }}
-    - name: Fetch Tags
-      run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-    - name: Get Previous Tag and Create New Tag
-      id: tags
-      run: |
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          PREV_TAG=$(git describe --tags --abbrev=0 (git rev-list --tags --skip=1 --max-count=1))
-          echo "PREV_TAG=$PREV_TAG" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        else
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22.0'
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Build
+        run: go build -o ephemyral-${{ runner.os }}-${{ github.sha }}
+      - name: Fetch Tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - name: Get Previous Tag and Create New Tag
+        id: tags
+        run: |
           PREV_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))
           echo "PREV_TAG=$PREV_TAG" >> $GITHUB_ENV
-        fi
-        NEW_TAG="v$(date +'%Y.%m.%d.%H%M%S')"
-        git tag -a $NEW_TAG -m "Generated tag from GitHub Actions"
-        echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-        git push --tags
-    - name: Generate Release Notes
-      run: |
-        RELEASE_NOTES=$(git log $PREV_TAG..$NEW_TAG --oneline)
-        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-        echo "$RELEASE_NOTES" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ env.NEW_TAG }}
-        release_name: Release ${{ env.NEW_TAG }} at $(date +'%Y-%m-%d %H:%M:%S')
-        body: |
-          Changes in this Release:
-          - ${{ env.RELEASE_NOTES }}
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./ephemyral-${{ runner.os }}-${{ github.sha }}
-        asset_name: ephemyral-${{ runner.os }}-${{ github.sha }}
-        asset_content_type: application/octet-stream
+          NEW_TAG="v$(date +'%Y.%m.%d.%H%M%S')"
+          git tag -a $NEW_TAG -m "Generated tag from GitHub Actions"
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
+          git push --tags
+      - name: Generate Release Notes
+        run: |
+          RELEASE_NOTES=$(git log $PREV_TAG..$NEW_TAG --oneline)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.NEW_TAG }}
+          release_name: Release ${{ env.NEW_TAG }} at $(date +'%Y-%m-%d %H:%M:%S')
+          body: |
+            Changes in this Release:
+            - ${{ env.RELEASE_NOTES }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./ephemyral-${{ runner.os }}-${{ github.sha }}
+          asset_name: ephemyral-${{ runner.os }}-${{ github.sha }}
+          asset_content_type: application/octet-stream
