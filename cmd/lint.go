@@ -42,10 +42,25 @@ var lintCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		directory := args[0]
 
+		existingLintCommand, err := getExistingCommand(directory, "lint")
+		if err != nil {
+			fmt.Println("Error reading .ephemyral file:", err)
+			return
+		}
+
+		if existingLintCommand != "" {
+			fmt.Println("Running existing lint command:", existingLintCommand)
+			if err := executeCommand(directory, existingLintCommand); err != nil {
+				fmt.Println("Error executing new lint command:", err)
+				return
+			}
+			return
+		}
+
 		lintCommand, err := generateLintCommand(directory)
 
 		if err != nil {
-			fmt.Println("Error generating linting command:", err)
+			fmt.Println("Error generating lint command:", err)
 			return
 		}
 
@@ -58,9 +73,9 @@ var lintCmd = &cobra.Command{
 
 		fmt.Println("Successfully generated and updated lint command:", refactoredLintCommand)
 
-		// Execute the linting command.
-		if err := executeCommand(directory, refactoredLintCommand); err != nil {
-			fmt.Println("Error executing linting command:", err)
+		// Execute the new lint command.
+		if err := executeCommand(directory, lintCommand); err != nil {
+			fmt.Println("Error executing new lint command:", err)
 		}
 	},
 }
