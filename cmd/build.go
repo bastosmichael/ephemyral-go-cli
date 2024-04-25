@@ -49,6 +49,11 @@ func generateBuildCommand(directory string) (string, error) {
             return err
         }
 
+        // Ignore .git directories.
+        if info.IsDir() && strings.HasSuffix(info.Name(), ".git") {
+            return filepath.SkipDir // Skip .git directories.
+        }
+
         if !info.IsDir() { // Only add files, not directories.
             relativePath, err := filepath.Rel(directory, path) // Get relative paths.
             if err != nil {
