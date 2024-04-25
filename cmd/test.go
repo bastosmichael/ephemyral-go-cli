@@ -58,6 +58,8 @@ func generateTestCommand(directory string) (string, error) {
 
 var testCmd = &cobra.Command{
     Use:   "test [directory]",
+    Short: "Generate and run a test command for the specified directory",
+    Long:  "The 'test' command retrieves the test command specified in the '.ephemyral' configuration file within the given directory. If no test command is specified, the command generates a test command based on the structure of the project's files. It then updates the '.ephemyral' file with the new test command and executes it. Use this command to ensure your project runs the appropriate tests before deployment or other build-related tasks.",
     Args:  cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         directory := args[0]

@@ -76,6 +76,8 @@ func generateBuildCommand(directory string) (string, error) {
 
 var buildCmd = &cobra.Command{
     Use:   "build [directory]",
+    Short: "Generate and run a build command for the specified directory",
+    Long:  "The 'build' command retrieves the build command specified in the '.ephemyral' configuration file within the given directory. If no build command is specified, the command generates a build command based on the structure of the directory given. It then updates the '.ephemyral' file with the new build command and executes it. Use this command to ensure your project runs the appropriate build before other tasks.",
     Args: cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         directory := args[0]
