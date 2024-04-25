@@ -11,7 +11,13 @@ require (
 )
 
 require (
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+)
+
+require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/fatih/color v1.16.0
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
