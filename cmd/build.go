@@ -26,7 +26,7 @@ func generateBuildCommand(directory string) (string, error) {
 
 var buildCmd = &cobra.Command{
 	Use:   "build [directory]",
-	Short: "Generate and run a build command for the specified directory",
+	Short: "Use AI to intelligently generate and execute a build command for the specified directory, optimizing for performance and efficiency.",
 	Long:  "The 'build' command generates a building command based on the structure of the project's files. It then updates the '.ephemyral' configuration file with the new build command and executes it. Use this command to ensure your project builds correctly and is free from errors.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

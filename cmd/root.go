@@ -12,7 +12,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "ephemyral",
 		Short: "A CLI for managing ephemyral tasks",
-		Long:  `Ephemyral is a CLI application for managing ephemyral tasks, including initialization, building, and testing.`,
+		Long:  `Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models, including initialization, building, and testing of ML-driven workflows.`,
 	}
 )
 

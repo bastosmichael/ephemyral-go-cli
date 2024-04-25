@@ -12,7 +12,7 @@ import (
 
 var createCmd = &cobra.Command{
     Use:   "create [file path] [prompt]",
-    Short: "Generate a new code file based on a prompt. If the file path is a directory, it generates multiple files.",
+    Short: "Employ a language model to generate new code files based on a natural language prompt. If the file path is a directory, it generates multiple AI-crafted files.",
     Long: `This command generates a new code file based on a given prompt. 
 If the file path is a directory, it uses a query to determine the file names and creates new files based on the provided prompt.`,
     Args: cobra.MinimumNArgs(1),

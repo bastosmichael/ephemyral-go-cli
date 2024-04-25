@@ -15,7 +15,7 @@ import (
 
 var refactorCmd = &cobra.Command{
     Use:   "refactor [file path] [prompt] [new file path]",
-    Short: "Refactor a given file or all files in a directory based on a prompt and output to a new location",
+    Short: "Utilize an advanced LLM to refactor given files or all files in a directory based on a prompt, outputting the improved code to a new location.",
     Long: `This command refactors a given file or all files in a directory by sending a prompt to an LLM 
 and applying the suggested changes, replacing the file content or creating new files in the specified directory.`,
     Args: cobra.MinimumNArgs(1),
