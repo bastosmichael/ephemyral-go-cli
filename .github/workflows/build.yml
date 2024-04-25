@@ -44,8 +44,6 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
         arch: [amd64, arm64]
         exclude:
-          - os: macos-latest
-            arch: arm64
           - os: windows-latest
             arch: arm64
     runs-on: ${{ matrix.os }}
@@ -67,13 +65,13 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build
-        run: go build -o ephemyral-${{ matrix.os }}-${{ matrix.arch }}
+        run: go build -o ephemyral-${{ runner.os }}-${{ matrix.arch }}
 
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ephemyral-${{ matrix.os }}-${{ matrix.arch }}
-          path: ephemyral-${{ matrix.os }}-${{ matrix.arch }}
+          name: ephemyral-${{ runner.os }}-${{ matrix.arch }}
+          path: ephemyral-${{ runner.os }}-${{ matrix.arch }}
 
   tag-and-release-and-upload:
     needs: build-and-upload
