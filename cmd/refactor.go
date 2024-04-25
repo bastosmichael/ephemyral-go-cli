@@ -74,7 +74,7 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
         string(fileContent),
     )
 
-    gpt4client.SetDebug(true)
+    gpt4client.SetDebug(false)
     refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
     if err != nil {
         fmt.Println("Error getting suggestion from LLM:", err)
