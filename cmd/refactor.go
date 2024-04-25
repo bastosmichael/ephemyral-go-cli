@@ -111,17 +111,6 @@ func isCode(content string) bool {
     return strings.Contains(content, "func") || strings.Contains(content, "import")
 }
 
-func filterOutCodeBlocks(content string) string {
-    lines := strings.Split(content, "\n")
-    filteredLines := make([]string, 0)
-    for _, line := range lines {
-        if !strings.Contains(line, "```") {
-            filteredLines = append(filteredLines, line)
-        }
-    }
-    return strings.Join(filteredLines, "\n")
-}
-
 func init() {
     rootCmd.AddCommand(refactorCmd)
 }

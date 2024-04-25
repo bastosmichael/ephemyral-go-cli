@@ -70,7 +70,8 @@ func generateBuildCommand(directory string) (string, error) {
     }
 
     // Join all file names into a single prompt.
-    fullPrompt := strings.Join(filesList, "\n")
+    fullPrompt := "Based on the following file list, provide the simplest command line required to build these files. The command must be in a single line and contain no extra text or commentary:\n" +
+                  strings.Join(filesList, "\n")
 
     gpt4client.SetDebug(true)
     buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
@@ -153,17 +154,20 @@ var buildCmd = &cobra.Command{
         }
 
         buildCommand, err := generateBuildCommand(directory)
+
         if err != nil {
             fmt.Println("Error generating build command:", err)
             return
         }
 
-        if err := updateEphemyralBuildCommand(directory, buildCommand); err != nil {
+        refactoredBuildCommand := filterOutCodeBlocks(buildCommand)
+
+        if err := updateEphemyralBuildCommand(directory, refactoredBuildCommand); err != nil {
             fmt.Println("Error updating .ephemyral file:", err)
             return
         }
 
-        fmt.Println("Successfully generated and updated build command:", buildCommand)
+        fmt.Println("Successfully generated and updated build command:", refactoredBuildCommand)
         
         // Execute the new build command.
         if err := executeBuildCommand(directory, buildCommand); err != nil {
