@@ -18,8 +18,7 @@ func generateLintCommand(directory string) (string, error) {
 	}
 
 	// Join all file names into a single prompt for linting.
-	fullPrompt := "Based on the following file list, provide the simplest command line required to lint these files. The command must be in a single line and contain no extra text or commentary:\n" +
-		strings.Join(filesList, "\n")
+	fullPrompt := LintCommandPrompt + strings.Join(filesList, "\n")
 
 	gpt4client.SetDebug(false)
 	lintCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)

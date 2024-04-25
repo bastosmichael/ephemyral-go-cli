@@ -23,7 +23,7 @@ and applying the suggested changes, replacing the file content or creating new f
         filePath := args[0]
 
         // Default prompt if userPrompt is not provided
-        userPrompt := "Optimize the code for better performance and readability."
+        userPrompt := DefaultRefactorPrompt
         
         if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
             userPrompt = args[1] // Use the provided prompt if available
@@ -68,8 +68,7 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
     }
 
     fullPrompt := fmt.Sprintf(
-        "Analyze the following code and return only the refactored or optimized code based on this instruction: '%s'. " +
-        "Provide the refactored version only, without extra text or unchanged code.\n\n```%s```",
+        RefactorPromptPattern,
         userPrompt,
         string(fileContent),
     )

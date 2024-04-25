@@ -17,8 +17,7 @@ func generateBuildCommand(directory string) (string, error) {
 	}
 
 	// Join all file names into a single prompt.
-	fullPrompt := "Based on the following file list, provide the simplest command line required to build these files. The command must be in a single line and contain no extra text or commentary:\n" +
-		strings.Join(filesList, "\n")
+	fullPrompt := BuildCommandPrompt + strings.Join(filesList, "\n")
 
 	gpt4client.SetDebug(false)
 	buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
