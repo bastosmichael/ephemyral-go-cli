@@ -119,6 +119,12 @@ jobs:
           name: ephemyral-Linux
           path: ubuntu
 
+      - name: Download Release Artifact (Windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-Windows
+          path: windows
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -149,4 +155,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu/ephemyral-Linux
           asset_name: ephemyral-Linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/ephemyral-Windows
+          asset_name: ephemyral-Windows
           asset_content_type: application/octet-stream
