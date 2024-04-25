@@ -42,6 +42,12 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+        arch: [amd64, arm64]
+        exclude:
+          - os: macos-latest
+            arch: arm64
+          - os: windows-latest
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -61,13 +67,13 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build
-        run: go build -o ephemyral-${{ runner.os }}
+        run: go build -o ephemyral-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ephemyral-${{ runner.os }}
-          path: ephemyral-${{ runner.os }}
+          name: ephemyral-${{ matrix.os }}-${{ matrix.arch }}
+          path: ephemyral-${{ matrix.os }}-${{ matrix.arch }}
 
   tag-and-release-and-upload:
     needs: build-and-upload
@@ -107,16 +113,28 @@ jobs:
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Download Release Artifact (macOS)
+      - name: Download Release Artifact (macOS - amd64)
         uses: actions/download-artifact@v3
         with:
-          name: ephemyral-macOS
+          name: ephemyral-macOS-amd64
           path: macos
 
-      - name: Download Release Artifact (Linux)
+      - name: Download Release Artifact (macOS - arm64)
         uses: actions/download-artifact@v3
         with:
-          name: ephemyral-Linux
+          name: ephemyral-macOS-arm64
+          path: macos
+
+      - name: Download Release Artifact (Linux - amd64)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-Linux-amd64
+          path: ubuntu
+
+      - name: Download Release Artifact (Linux - arm64)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-Linux-arm64
           path: ubuntu
 
       - name: Download Release Artifact (Windows)
@@ -137,24 +155,44 @@ jobs:
             Changes in this Release:
             - ${{ env.RELEASE_NOTES }}
 
-      - name: Upload Release Asset (macOS)
+      - name: Upload Release Asset (macOS - amd64)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: macos/ephemyral-macOS
-          asset_name: ephemyral-macOS
+          asset_path: macos/ephemyral-macOS-amd64
+          asset_name: ephemyral-macOS-amd64
           asset_content_type: application/octet-stream
 
-      - name: Upload Release Asset (Linux)
+      - name: Upload Release Asset (macOS - arm64)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ubuntu/ephemyral-Linux
-          asset_name: ephemyral-Linux
+          asset_path: macos/ephemyral-macOS-arm64
+          asset_name: ephemyral-macOS-arm64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux - amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/ephemyral-Linux-amd64
+          asset_name: ephemyral-Linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux - arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/ephemyral-Linux-arm64
+          asset_name: ephemyral-Linux-arm64
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Windows)
