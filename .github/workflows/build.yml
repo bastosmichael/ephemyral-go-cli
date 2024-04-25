@@ -112,18 +112,12 @@ jobs:
       - name: Build
         run: go build -o ephemyral-${{ runner.os }}-${{ github.sha }}
 
-      - name: Get Upload URL
-        id: get_upload_url
-        run: |
-          upload_url=${{ needs.create-tag-and-release.outputs.upload_url }}
-          echo "upload_url=$upload_url" >> $GITHUB_OUTPUT
-
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
+          upload_url: ${{ needs.create-tag-and-release.outputs.upload_url }}
           asset_path: ./ephemyral-${{ runner.os }}-${{ github.sha }}
           asset_name: ephemyral-${{ runner.os }}-${{ github.sha }}
           asset_content_type: application/octet-stream
