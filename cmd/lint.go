@@ -103,7 +103,7 @@ var lintCmd = &cobra.Command{
 		}
 
 		// Update the .ephemyral file with the successful lint command
-		if err := updateEphemyralCommand(directory, "lint", refactoredLintCommand); err != nil {
+		if err := updateEphemyralFile(directory, "lint", refactoredLintCommand); err != nil {
 			fmt.Println("Error updating .ephemyral file:", err)
 			return
 		}

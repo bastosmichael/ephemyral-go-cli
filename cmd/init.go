@@ -36,6 +36,7 @@ func createEphemyralFile(filename string) {
 		BuildCommand: "",
 		TestCommand:  "",
 		LintCommand:  "",
+		ReadMeLocation: "",
 	}
 
 	// Marshal the content into YAML format

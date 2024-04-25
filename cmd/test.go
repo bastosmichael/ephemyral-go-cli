@@ -95,7 +95,7 @@ var testCmd = &cobra.Command{
 		}
 
 		// Update the .ephemyral file with the successful test command
-		if err := updateEphemyralCommand(directory, "test", refactoredTestCommand); err != nil {
+		if err := updateEphemyralFile(directory, "test", refactoredTestCommand); err != nil {
 			fmt.Println("Error updating .ephemyral file:", err)
 			return
 		}

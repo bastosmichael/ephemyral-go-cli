@@ -98,7 +98,7 @@ var buildCmd = &cobra.Command{
 		}
 
 		// Update the .ephemyral file with the successful build command
-		if err := updateEphemyralCommand(directory, "build", refactoredBuildCommand); err != nil {
+		if err := updateEphemyralFile(directory, "build", refactoredBuildCommand); err != nil {
 			fmt.Println("Error updating .ephemyral file:", err)
 			return
 		}
