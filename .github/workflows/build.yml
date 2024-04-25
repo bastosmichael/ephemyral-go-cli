@@ -64,6 +64,13 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           git push --tags
 
+      - name: Generate Release Notes
+        run: |
+          RELEASE_NOTES=$(git log $PREV_TAG..$NEW_TAG --oneline)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
   build-and-upload:
     needs: tag-and-release
     strategy:
@@ -111,13 +118,6 @@ jobs:
         with:
           name: ephemyral-Linux
           path: ubuntu
-
-      - name: Generate Release Notes
-        run: |
-          RELEASE_NOTES=$(git log $PREV_TAG..$NEW_TAG --oneline)
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$RELEASE_NOTES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
 
       - name: Create Release
         id: create_release
