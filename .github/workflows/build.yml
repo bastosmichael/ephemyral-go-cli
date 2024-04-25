@@ -43,6 +43,11 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-latest
+            arch: amd64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -69,7 +74,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Build
-        run: go build -o ephemyral-${{ runner.os }}-${{ github.sha }}
+        run: |
+          GOOS=darwin
+          GOARCH=${{ matrix.arch }}
+          go build -o ephemyral-${{ matrix.os }}-${{ matrix.arch }}-${{ github.sha }}
 
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
