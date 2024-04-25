@@ -3,7 +3,6 @@ module ephemyral
 go 1.22.0
 
 require (
-	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4

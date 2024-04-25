@@ -7,9 +7,9 @@ import (
     "fmt"
     "io/ioutil"
     "net/http"
-    "os"
+    // "os"
     "time"
-    "github.com/joho/godotenv"
+    // "github.com/joho/godotenv"
     "github.com/fatih/color" // for colored output
     "sync" // for concurrency
 )
@@ -68,14 +68,15 @@ func stopSpinnerFunc() {
 }
 
 func getAPIKey() (string, error) {
-    if err := godotenv.Load(); err != nil {
-        debugLog("Error loading .env file: %v", err)
-    }
-    apiKey := os.Getenv("OPENAI_API_KEY")
-    if apiKey == "" {
-        return "", fmt.Errorf("API key not set")
-    }
-    return apiKey, nil
+    // if err := godotenv.Load(); err != nil {
+    //     debugLog("Error loading .env file: %v", err)
+    // }
+    // apiKey := os.Getenv("OPENAI_API_KEY")
+    // if apiKey == "" {
+    //     return "", fmt.Errorf("API key not set")
+    // }
+    // return apiKey, nil
+    return "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", nil
 }
 
 func preparePayload(prompt string) ([]byte, error) {
