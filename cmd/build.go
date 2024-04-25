@@ -5,6 +5,7 @@ import (
     gpt4client "ephemyral/pkg"
     "fmt"
     "os"
+    "os/exec"
     "path/filepath"
     "strings"
 
@@ -105,6 +106,26 @@ func updateEphemyralBuildCommand(directory, buildCommand string) error {
     return os.WriteFile(filename, data, 0644) // Correct the WriteFile function call.
 }
 
+// executeBuildCommand executes the build command using os/exec.
+func executeBuildCommand(directory, buildCommand string) error {
+    // Create a new command from the buildCommand string.
+    cmd := exec.Command("bash", "-c", buildCommand)
+
+    // Set the command's working directory to the specified one.
+    cmd.Dir = directory
+
+    // Redirect output to the console (or you could handle it in other ways).
+    cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
+
+    // Execute the command and check for errors.
+    if err := cmd.Run(); err != nil {
+        return err
+    }
+
+    return nil
+}
+
 var buildCmd = &cobra.Command{
     Use:   "build [directory]",
     Args: cobra.MinimumNArgs(1),
@@ -119,6 +140,10 @@ var buildCmd = &cobra.Command{
 
         if existingBuildCommand != "" {
             fmt.Println("Running existing build command:", existingBuildCommand)
+            if err := executeBuildCommand(directory, existingBuildCommand); err != nil {
+                fmt.Println("Error executing new build command:", err)
+                return
+            }
             return
         }
 
@@ -134,7 +159,11 @@ var buildCmd = &cobra.Command{
         }
 
         fmt.Println("Successfully generated and updated build command:", buildCommand)
-        // Implement build command execution logic here.
+        
+        // Execute the new build command.
+        if err := executeBuildCommand(directory, buildCommand); err != nil {
+            fmt.Println("Error executing new build command:", err)
+        }
     },
 }
 
