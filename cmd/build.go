@@ -39,19 +39,35 @@ func getExistingBuildCommand(directory string) (string, error) {
     return ephemyral.BuildCommand, nil
 }
 
-// generateBuildCommand generates a build command by listing all files in the directory and subdirectories.
+// generateBuildCommand generates a build command by listing all files in the root directory and subdirectories.
 func generateBuildCommand(directory string) (string, error) {
     var filesList []string
 
-    // Walk through the directory and its subdirectories to get all file names.
-    err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+    // First, get the files in the root directory.
+    rootFiles, err := os.ReadDir(directory) // Read the content of the root directory.
+    if err != nil {
+        return "", err
+    }
+
+    for _, file := range rootFiles {
+        if !file.IsDir() { // Only add files, not directories.
+            filesList = append(filesList, file.Name()) // Add the file names to the list.
+        }
+    }
+
+    // Walk through the directory and its subdirectories to get all other file names.
+    err = filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
         if err != nil {
             return err
         }
 
-        // Ignore .git directories.
+        // Ignore the .git directories.
         if info.IsDir() && strings.HasSuffix(info.Name(), ".git") {
             return filepath.SkipDir // Skip .git directories.
+        }
+
+        if info.IsDir() && filepath.Base(path) == directory {
+            return nil // Skip the root directory as we've already processed its files.
         }
 
         if !info.IsDir() { // Only add files, not directories.
@@ -63,7 +79,7 @@ func generateBuildCommand(directory string) (string, error) {
         }
 
         return nil
-    }) // Correctly close this anonymous function
+    }) // Correctly close this anonymous function.
 
     if err != nil {
         return "", err
