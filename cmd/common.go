@@ -151,5 +151,10 @@ func filterOutCodeBlocks(content string) string {
             filteredLines = append(filteredLines, line)
         }
     }
-    return strings.Join(filteredLines, "\n")
+    // Join the filtered lines and ensure it ends with a newline
+    result := strings.Join(filteredLines, "\n")
+    if !strings.HasSuffix(result, "\n") {
+        result += "\n" // Add a newline if it doesn't exist
+    }
+    return result
 }

@@ -83,7 +83,7 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
     // Filter out lines with triple backticks
     refactoredContent = filterOutCodeBlocks(refactoredContent)
 
-    if !isCode(refactoredContent) || strings.TrimSpace(refactoredContent) == "" {
+    if strings.TrimSpace(refactoredContent) == "" {
         fmt.Println("Invalid or insufficient content received. Expected specific code changes only.")
         return
     }
@@ -104,10 +104,6 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
     }
 
     fmt.Println("File refactored successfully:", targetFilePath)
-}
-
-func isCode(content string) bool {
-    return strings.Contains(content, "func") || strings.Contains(content, "import")
 }
 
 func init() {

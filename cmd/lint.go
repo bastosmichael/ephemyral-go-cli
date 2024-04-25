@@ -1,4 +1,3 @@
-// lint.go
 package cmd
 
 import (
@@ -6,20 +5,16 @@ import (
 	"strings"
 
 	gpt4client "ephemyral/pkg"
-
 	"github.com/spf13/cobra"
 )
 
-// generateLintCommand generates a linting command based on the file structure in the directory.
 func generateLintCommand(directory string) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
 	}
 
-	// Join all file names into a single prompt for linting.
 	fullPrompt := LintCommandPrompt + strings.Join(filesList, "\n")
-
 	gpt4client.SetDebug(false)
 	lintCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
 	if err != nil {
@@ -40,41 +35,34 @@ var lintCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		directory := args[0]
-
 		existingLintCommand, err := getExistingCommand(directory, "lint")
 		if err != nil {
-			fmt.Println("Error reading .ephemyral file:", err)
+			fmt.Printf("Error reading .ephemyral file: %v\n", err)
 			return
 		}
-
 		if existingLintCommand != "" {
-			fmt.Println("Running existing lint command:", existingLintCommand)
+			fmt.Printf("Running existing lint command: %s\n", existingLintCommand)
 			if err := executeCommand(directory, existingLintCommand); err != nil {
-				fmt.Println("Error executing new lint command:", err)
-				return
+				fmt.Printf("Error executing command: %v\n", err)
 			}
 			return
 		}
 
 		lintCommand, err := generateLintCommand(directory)
-
 		if err != nil {
-			fmt.Println("Error generating lint command:", err)
+			fmt.Printf("Error generating lint command: %v\n", err)
 			return
 		}
 
 		refactoredLintCommand := filterOutCodeBlocks(lintCommand)
-
 		if err := updateEphemyralCommand(directory, "lint", refactoredLintCommand); err != nil {
-			fmt.Println("Error updating .ephemyral file:", err)
+			fmt.Printf("Error updating .ephemyral file: %v\n", err)
 			return
 		}
 
-		fmt.Println("Successfully generated and updated lint command:", refactoredLintCommand)
-
-		// Execute the new lint command.
-		if err := executeCommand(directory, lintCommand); err != nil {
-			fmt.Println("Error executing new lint command:", err)
+		fmt.Printf("Successfully generated and updated lint command: %s\n", refactoredLintCommand)
+		if err := executeCommand(directory, refactoredLintCommand); err != nil {
+			fmt.Printf("Error executing new lint command: %v\n", err)
 		}
 	},
 }
