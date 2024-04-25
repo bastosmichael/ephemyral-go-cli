@@ -1,4 +1,4 @@
-name: Build and Tag on Merge to Main
+name: Build, Tag, and Release on Merge to Main
 
 on:
   push:
@@ -64,9 +64,13 @@ jobs:
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           git push --tags
 
+      - name: Display NEW_TAG
+        run: |
+          echo "Generated New Tag: ${{ env.NEW_TAG }}"
+
       - name: Generate Release Notes
         run: |
-          RELEASE_NOTES=$(git log $PREV_TAG..$NEW_TAG --oneline)
+          RELEASE_NOTES=$(git log ${{ env.PREV_TAG }}..${{ env.NEW_TAG }} --oneline)
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
           echo "$RELEASE_NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -137,7 +141,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: macos/ephemyral-macos-latest
+          asset_path: macos/ephemyral-macOS
           asset_name: ephemyral-macOS
           asset_content_type: application/octet-stream
 
