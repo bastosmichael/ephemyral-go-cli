@@ -41,8 +41,8 @@ jobs:
     needs: build-and-test
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        arch: [amd64, arm64]
+        os: [macos-latest, ubuntu-latest, windows-latest, freebsd-latest]
+        arch: [amd64, arm64, 386]
         exclude:
           - os: windows-latest
             arch: arm64
