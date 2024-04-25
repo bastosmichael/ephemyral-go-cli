@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -16,6 +17,8 @@ type EphemyralFile struct {
     TestCommand  string `yaml:"test_command"`
     LintCommand  string `yaml:"lint_command"`
 }
+
+var retryDelay = 2 * time.Second
 
 // getFileList retrieves a list of all non-directory file names in the specified directory and its subdirectories,
 // skipping specified directories like ".git".

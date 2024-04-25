@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	gpt4client "ephemyral/pkg"
+
 	"github.com/spf13/cobra"
 )
 
@@ -35,38 +37,82 @@ var lintCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		directory := args[0]
+
+		// Get the retry count from flags, with a default of 3
+		defaultRetryCount, err := cmd.Flags().GetInt("retry")
+		if err != nil {
+			fmt.Println("Error reading retry count:", err)
+			return
+		}
+
+		// Try to get existing lint command
 		existingLintCommand, err := getExistingCommand(directory, "lint")
 		if err != nil {
-			fmt.Printf("Error reading .ephemyral file: %v\n", err)
+			fmt.Println("Error reading .ephemyral file:", err)
 			return
 		}
+
 		if existingLintCommand != "" {
-			fmt.Printf("Running existing lint command: %s\n", existingLintCommand)
-			if err := executeCommand(directory, existingLintCommand); err != nil {
-				fmt.Printf("Error executing command: %v\n", err)
+			// Retry execution with the existing command
+			success := false
+			for i := 0; i < defaultRetryCount; i++ {
+				fmt.Println("Running existing lint command:", existingLintCommand)
+				if err := executeCommand(directory, existingLintCommand); err != nil {
+					fmt.Println("Error executing lint command:", err)
+					time.Sleep(retryDelay) // wait before retrying
+				} else {
+					success = true
+					fmt.Println("Successfully executed existing lint command:", existingLintCommand) // Success message
+					break
+				}
 			}
+
+			if !success {
+				fmt.Println("Failed to execute existing lint command after retries.")
+				return
+			}
+
 			return
 		}
 
-		lintCommand, err := generateLintCommand(directory)
-		if err != nil {
-			fmt.Printf("Error generating lint command: %v\n", err)
+		// Retry generating and executing the lint command
+		var refactoredLintCommand string
+		success := false
+		for i := 0; i < defaultRetryCount; i++ {
+			lintCommand, err := generateLintCommand(directory)
+			if err != nil {
+				fmt.Println("Error generating lint command:", err)
+				time.Sleep(retryDelay) // wait before retrying
+			} else {
+				refactoredLintCommand = filterOutCodeBlocks(lintCommand)
+				fmt.Println("Successfully generated lint command:", refactoredLintCommand) // Success message
+				if err := executeCommand(directory, refactoredLintCommand); err != nil {
+					fmt.Println("Error executing lint command:", err)
+					time.Sleep(retryDelay) // wait before retrying
+				} else {
+					success = true
+					fmt.Println("Successfully executed lint command:", refactoredLintCommand) // Success message
+					break
+				}
+			}
+		}
+
+		if !success {
+			fmt.Println("Failed to generate or execute lint command after retries.")
 			return
 		}
 
-		refactoredLintCommand := filterOutCodeBlocks(lintCommand)
+		// Update the .ephemyral file with the successful lint command
 		if err := updateEphemyralCommand(directory, "lint", refactoredLintCommand); err != nil {
-			fmt.Printf("Error updating .ephemyral file: %v\n", err)
+			fmt.Println("Error updating .ephemyral file:", err)
 			return
 		}
 
-		fmt.Printf("Successfully generated and updated lint command: %s\n", refactoredLintCommand)
-		if err := executeCommand(directory, refactoredLintCommand); err != nil {
-			fmt.Printf("Error executing new lint command: %v\n", err)
-		}
+		fmt.Println("Successfully updated .ephemyral with lint command:", refactoredLintCommand) // Success message
 	},
 }
 
 func init() {
+	lintCmd.Flags().Int("retry", 3, "Number of retries for generating and executing lint command")
 	rootCmd.AddCommand(lintCmd)
 }
