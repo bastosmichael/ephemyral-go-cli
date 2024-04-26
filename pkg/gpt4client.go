@@ -1,15 +1,17 @@
 package gpt4client
 
 import (
-    "bytes"
-    "crypto/tls"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "net/http"
-    "time"
-    "github.com/fatih/color"
-    "sync"
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
+	"github.com/fatih/color"
 )
 
 const (
@@ -34,7 +36,7 @@ func SetDebug(enabled bool) {
 // debugLog prints debug information if debug mode is enabled.
 func debugLog(format string, v ...interface{}) {
     if debug {
-        fmt.Printf(format+"\n", v...)
+        fmt.Printf(format + "\n", v...)
     }
 }
 
@@ -51,7 +53,7 @@ func startSpinner() {
             case <-stopSpinner:
                 return
             default:
-                fmt.Printf("\r%s", color(spinnerChars[i%len(spinnerChars)]))
+                fmt.Printf("\r%s", color(spinnerChars[i % len(spinnerChars)]))
                 time.Sleep(100 * time.Millisecond)
                 i++
             }
@@ -62,11 +64,21 @@ func startSpinner() {
 // stopSpinner stops the spinner.
 func stopSpinnerFunc() {
     stopSpinner <- true
-    spinnerDone.Wait()
+    spinnerDone.Wait() // Wait for the spinner goroutine to finish
 }
 
-func getAPIKey() (string, error) {
-    return "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", nil
+func getAPIKey() (string) {
+    // err := godotenv.Load() // load .env file, no error check
+    // if err != nil {
+    //     debugLog("Warning: .env file not found. Using blank API key.")
+    // }
+    
+    apiKey := os.Getenv("OPENAI_API_KEY")
+    if apiKey == "" {
+        apiKey = "" // default to blank if .env doesn't exist or OPENAI_API_KEY is empty
+    }
+
+    return apiKey
 }
 
 func preparePayload(prompt string) ([]byte, error) {
@@ -76,7 +88,7 @@ func preparePayload(prompt string) ([]byte, error) {
     }
 
     payload := map[string]interface{}{
-        "model":    model,
+        "model": model,
         "messages": messages,
     }
 
@@ -110,10 +122,7 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 }
 
 func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
-    apiKey, err := getAPIKey()
-    if err != nil {
-        return "", err
-    }
+    apiKey := getAPIKey() // Always return a string, may be blank if no .env file
 
     payloadBytes, err := preparePayload(prompt)
     if err != nil {
@@ -131,6 +140,7 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
     if err != nil {
         return "", err
     }
+    
     defer resp.Body.Close()
 
     body, err := ioutil.ReadAll(resp.Body)
@@ -165,5 +175,5 @@ func extractContentFromResponse(responseMap map[string]interface{}) (string, err
         }
     }
 
-    return "", fmt.Errorf("Your current trial usage of Ephemyral may have either expired or been revoked, please reach out for an updated version and or contact us.")
+	return "", fmt.Errorf("Your current trial usage of Ephemyral may have either expired or been revoked, please reach out for an updated version and or contact us.")
 }
