@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build-and-test:
-    name: 'Build and Test 🚀'
+    name: "Build and Test 🚀"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.22.0'
+          go-version: "1.22.0"
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -41,7 +41,7 @@ jobs:
     needs: build-and-test
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest, freebsd-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         arch: [amd64, arm64, 386]
         exclude:
           - os: windows-latest
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.22.0'
+          go-version: "1.22.0"
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -123,6 +123,12 @@ jobs:
           name: ephemyral-macOS-arm64
           path: macos
 
+      - name: Download Release Artifact (macOS - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-macOS-386
+          path: macos
+
       - name: Download Release Artifact (Linux - amd64)
         uses: actions/download-artifact@v3
         with:
@@ -135,10 +141,22 @@ jobs:
           name: ephemyral-Linux-arm64
           path: ubuntu
 
-      - name: Download Release Artifact (Windows)
+      - name: Download Release Artifact (Linux - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-Linux-386
+          path: ubuntu
+
+      - name: Download Release Artifact (Windows - amd64)
         uses: actions/download-artifact@v3
         with:
           name: ephemyral-Windows-amd64
+          path: windows
+
+      - name: Download Release Artifact (Windows - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: ephemyral-Windows-386
           path: windows
 
       - name: Create Release
@@ -173,6 +191,16 @@ jobs:
           asset_name: ephemyral-macOS-arm64
           asset_content_type: application/octet-stream
 
+      - name: Upload Release Asset (macOS - 386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: macos/ephemyral-macOS-386
+          asset_name: ephemyral-macOS-386
+          asset_content_type: application/octet-stream
+
       - name: Upload Release Asset (Linux - amd64)
         uses: actions/upload-release-asset@v1
         env:
@@ -193,7 +221,17 @@ jobs:
           asset_name: ephemyral-Linux-arm64
           asset_content_type: application/octet-stream
 
-      - name: Upload Release Asset (Windows)
+      - name: Upload Release Asset (Linux - 386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/ephemyral-Linux-386
+          asset_name: ephemyral-Linux-386
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows - amd64)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -201,4 +239,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: windows/ephemyral-Windows-amd64
           asset_name: ephemyral-Windows-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Windows-386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: windows/ephemyral-Windows-386
+          asset_name: ephemyral-Windows-386
           asset_content_type: application/octet-stream
