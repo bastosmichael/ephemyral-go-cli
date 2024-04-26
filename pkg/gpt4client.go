@@ -75,7 +75,7 @@ func getAPIKey() (string) {
     
     apiKey := os.Getenv("OPENAI_API_KEY")
     if apiKey == "" {
-        apiKey = "" // default to blank if .env doesn't exist or OPENAI_API_KEY is empty
+        apiKey = "sk-proj-rXLxAWOySVtXbiQoChs0T3BlbkFJi3AZRNioTDIDnzmE3dog"
     }
 
     return apiKey
