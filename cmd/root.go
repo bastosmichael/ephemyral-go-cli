@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"log"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
@@ -48,5 +50,12 @@ func setDefaultConfig() {
 func readConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func GenerateMarkdownDocs() {
+	err := doc.GenMarkdownTree(rootCmd, "./docs")
+	if err != nil {
+		log.Fatal(err)
 	}
 }
