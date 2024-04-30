@@ -77,7 +77,7 @@ var testCmd = &cobra.Command{
 				time.Sleep(retryDelay) // wait before retrying
 			} else {
 				refactoredTestCommand = filterOutCodeBlocks(testCommand)
-				fmt.Println("Successfully generated test command:", refactoredTestCommand) // Success message
+				fmt.Println("Successfully discovered test command:", refactoredTestCommand) // Success message
 				if err := executeCommand(directory, refactoredTestCommand); err != nil {
 					fmt.Println("Error executing test command:", err)
 					time.Sleep(retryDelay) // wait before retrying

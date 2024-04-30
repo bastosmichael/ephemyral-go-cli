@@ -1,22 +1,22 @@
 package gpt4client
 
 import (
-    "bytes"
-    "crypto/tls"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "net/http"
-    // "os"
-    "time"
-    // "github.com/joho/godotenv"
-    "github.com/fatih/color" // for colored output
-    "sync" // for concurrency
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
+	"github.com/fatih/color"
 )
 
 const (
     apiURL   = "https://api.openai.com/v1/chat/completions"
-    model    = "gpt-4-turbo-preview"
+    model    = "gpt-4-turbo"
     roleSys  = "system"
     roleUser = "user"
     roleSysContent = "You are writing software code."
@@ -36,7 +36,7 @@ func SetDebug(enabled bool) {
 // debugLog prints debug information if debug mode is enabled.
 func debugLog(format string, v ...interface{}) {
     if debug {
-        fmt.Printf(format+"\n", v...)
+        fmt.Printf(format + "\n", v...)
     }
 }
 
@@ -46,14 +46,14 @@ func startSpinner() {
     go func() {
         defer spinnerDone.Done()
         spinnerChars := []string{"|", "/", "-", "\\"}
-        color := color.New(color.FgCyan).SprintFunc() // Cyan spinner
+        color := color.New(color.FgCyan).SprintFunc()
         i := 0
         for {
             select {
             case <-stopSpinner:
                 return
             default:
-                fmt.Printf("\r%s", color(spinnerChars[i%len(spinnerChars)]))
+                fmt.Printf("\r%s", color(spinnerChars[i % len(spinnerChars)]))
                 time.Sleep(100 * time.Millisecond)
                 i++
             }
@@ -67,16 +67,18 @@ func stopSpinnerFunc() {
     spinnerDone.Wait() // Wait for the spinner goroutine to finish
 }
 
-func getAPIKey() (string, error) {
-    // if err := godotenv.Load(); err != nil {
-    //     debugLog("Error loading .env file: %v", err)
+func getAPIKey() (string) {
+    // err := godotenv.Load() // load .env file, no error check
+    // if err != nil {
+    //     debugLog("Warning: .env file not found. Using blank API key.")
     // }
-    // apiKey := os.Getenv("OPENAI_API_KEY")
-    // if apiKey == "" {
-    //     return "", fmt.Errorf("API key not set")
-    // }
-    // return apiKey, nil
-    return "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", nil
+    
+    apiKey := os.Getenv("OPENAI_API_KEY")
+    if apiKey == "" {
+        apiKey = "sk-proj-rXLxAWOySVtXbiQoChs0T3BlbkFJi3AZRNioTDIDnzmE3dog"
+    }
+
+    return apiKey
 }
 
 func preparePayload(prompt string) ([]byte, error) {
@@ -86,7 +88,7 @@ func preparePayload(prompt string) ([]byte, error) {
     }
 
     payload := map[string]interface{}{
-        "model":    model,
+        "model": model,
         "messages": messages,
     }
 
@@ -120,14 +122,11 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 }
 
 func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
-    apiKey, err := getAPIKey()
-    if err != nil {
-        return "", err
-    }
+    apiKey := getAPIKey() // Always return a string, may be blank if no .env file
 
     payloadBytes, err := preparePayload(prompt)
     if err != nil {
-        return "", fmt.Errorf("error preparing request payload: %v", err)
+        return "", err
     }
 
     debugLog("Request payload: %s", string(payloadBytes))
@@ -139,24 +138,29 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
 
     resp, err := doPostRequest(client, payloadBytes, apiKey)
     if err != nil {
-        return "", fmt.Errorf("error sending request to the API: %v", err)
+        return "", err
     }
+    
     defer resp.Body.Close()
 
     body, err := ioutil.ReadAll(resp.Body)
     if err != nil {
-        return "", fmt.Errorf("error reading response body: %v", err)
+        return "", err
     }
 
     var responseMap map[string]interface{}
     if err := json.Unmarshal(body, &responseMap); err != nil {
-        return "", fmt.Errorf("error parsing JSON response: %v", err)
+        return "", err
     }
 
     return extractContentFromResponse(responseMap)
 }
 
 func extractContentFromResponse(responseMap map[string]interface{}) (string, error) {
+    if content, ok := responseMap["error"].(string); ok {
+        return "", fmt.Errorf(content)
+    }
+
     choices, ok := responseMap["choices"].([]interface{})
     if ok && len(choices) > 0 {
         firstChoice, ok := choices[0].(map[string]interface{})
@@ -170,5 +174,6 @@ func extractContentFromResponse(responseMap map[string]interface{}) (string, err
             }
         }
     }
-    return "", fmt.Errorf("no valid content found")
+
+	return "", fmt.Errorf("Your current trial usage of Ephemyral may have either expired or been revoked, please reach out for an updated version and or contact us.")
 }
