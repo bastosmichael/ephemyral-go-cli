@@ -75,25 +75,47 @@ var lintCmd = &cobra.Command{
 			return
 		}
 
-		// Retry generating and executing the lint command
+		// Generate and execute a new lint command
 		var refactoredLintCommand string
 		success := false
 		for i := 0; i < defaultRetryCount; i++ {
 			lintCommand, err := generateLintCommand(directory)
 			if err != nil {
 				fmt.Println("Error generating lint command:", err)
-				time.Sleep(retryDelay) // wait before retrying
-			} else {
-				refactoredLintCommand = filterOutCodeBlocks(lintCommand)
-				fmt.Println("Successfully discovered lint command:", refactoredLintCommand) // Success message
-				if err := executeCommand(directory, refactoredLintCommand); err != nil {
-					fmt.Println("Error executing lint command:", err)
-					time.Sleep(retryDelay) // wait before retrying
-				} else {
-					success = true
-					fmt.Println("Successfully executed lint command:", refactoredLintCommand) // Success message
-					break
+				time.Sleep(retryDelay)
+				continue
+			}
+
+			refactoredLintCommand = filterOutCodeBlocks(lintCommand)
+			fmt.Println("Successfully generated lint command:", refactoredLintCommand)
+
+			if err := executeCommand(directory, refactoredLintCommand); err != nil {
+				// Handle missing dependency error
+				dependencyCommand, depErr := generateDependencyCommand(refactoredLintCommand, err.Error())
+				if depErr != nil {
+					fmt.Println("Error generating dependency command:", depErr)
+					return
 				}
+
+				fmt.Println("Running dependency installation command:", dependencyCommand)
+				if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
+					fmt.Println("Error executing dependency command:", depErr)
+					time.Sleep(retryDelay)
+				} else {
+					// Retry executing lint command
+					if err := executeCommand(directory, refactoredLintCommand); err != nil {
+						fmt.Println("Error executing lint command:", err)
+						time.Sleep(retryDelay)
+					} else {
+						success = true
+						fmt.Println("Successfully executed lint command after dependency installation:", refactoredLintCommand)
+						break
+					}
+				}
+			} else {
+				success = true
+				fmt.Println("Successfully executed lint command:", refactoredLintCommand)
+				break
 			}
 		}
 
