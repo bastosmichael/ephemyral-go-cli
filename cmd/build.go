@@ -80,7 +80,7 @@ var buildCmd = &cobra.Command{
 				time.Sleep(retryDelay) // wait before retrying
 			} else {
 				refactoredBuildCommand = filterOutCodeBlocks(buildCommand)
-				fmt.Println("Successfully generated build command:", refactoredBuildCommand) // Success message
+				fmt.Println("Successfully discovered build command:", refactoredBuildCommand) // Success message
 				if err := executeCommand(directory, refactoredBuildCommand); err != nil {
 					fmt.Println("Error executing build command:", err)
 					time.Sleep(retryDelay) // wait before retrying

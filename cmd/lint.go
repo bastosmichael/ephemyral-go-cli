@@ -85,7 +85,7 @@ var lintCmd = &cobra.Command{
 				time.Sleep(retryDelay) // wait before retrying
 			} else {
 				refactoredLintCommand = filterOutCodeBlocks(lintCommand)
-				fmt.Println("Successfully generated lint command:", refactoredLintCommand) // Success message
+				fmt.Println("Successfully discovered lint command:", refactoredLintCommand) // Success message
 				if err := executeCommand(directory, refactoredLintCommand); err != nil {
 					fmt.Println("Error executing lint command:", err)
 					time.Sleep(retryDelay) // wait before retrying

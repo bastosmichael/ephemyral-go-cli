@@ -16,7 +16,7 @@ type EphemyralFile struct {
 	BuildCommand   string `yaml:"build_command"`
 	TestCommand    string `yaml:"test_command"`
 	LintCommand    string `yaml:"lint_command"`
-	ReadMeLocation string `yaml:"readme_location"`
+	DocsCommand    string `yaml:"docs_command"`
 }
 
 var retryDelay = 2 * time.Second
@@ -137,8 +137,8 @@ func updateEphemyralFile(directory, key, command string) error {
 		ephemyral.TestCommand = command
 	} else if key == "lint" {
 		ephemyral.LintCommand = command
-	} else if key == "readme" {
-		ephemyral.ReadMeLocation = command
+	} else if key == "docs" {
+		ephemyral.DocsCommand = command
 	}
 
 	data, err := yaml.Marshal(&ephemyral)
