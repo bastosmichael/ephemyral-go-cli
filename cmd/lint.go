@@ -55,10 +55,12 @@ var lintCmd = &cobra.Command{
 		if existingLintCommand != "" {
 			// Retry execution with the existing command
 			success := false
+			var lastError error
 			for i := 0; i < defaultRetryCount; i++ {
 				fmt.Println("Running existing lint command:", existingLintCommand)
-				if err := executeCommand(directory, existingLintCommand); err != nil {
-					fmt.Println("Error executing lint command:", err)
+				lastError = executeCommand(directory, existingLintCommand)
+				if lastError != nil {
+					fmt.Println("Error executing lint command:", lastError)
 					time.Sleep(retryDelay) // wait before retrying
 				} else {
 					success = true
@@ -68,7 +70,7 @@ var lintCmd = &cobra.Command{
 			}
 
 			if !success {
-				fmt.Println("Failed to execute existing lint command after retries.")
+				fmt.Println("Failed to execute existing lint command after retries:", lastError)
 				return
 			}
 
@@ -78,9 +80,11 @@ var lintCmd = &cobra.Command{
 		// Generate and execute a new lint command
 		var refactoredLintCommand string
 		success := false
+		var lastError error
 		for i := 0; i < defaultRetryCount; i++ {
 			lintCommand, err := generateLintCommand(directory)
 			if err != nil {
+				lastError = err
 				fmt.Println("Error generating lint command:", err)
 				time.Sleep(retryDelay)
 				continue
@@ -89,22 +93,25 @@ var lintCmd = &cobra.Command{
 			refactoredLintCommand = filterOutCodeBlocks(lintCommand)
 			fmt.Println("Successfully generated lint command:", refactoredLintCommand)
 
-			if err := executeCommand(directory, refactoredLintCommand); err != nil {
+			lastError = executeCommand(directory, refactoredLintCommand)
+			if lastError != nil {
 				// Handle missing dependency error
-				dependencyCommand, depErr := generateDependencyCommand(refactoredLintCommand, err.Error())
+				dependencyCommand, depErr := generateDependencyCommand(refactoredLintCommand, lastError.Error())
 				if depErr != nil {
 					fmt.Println("Error generating dependency command:", depErr)
 					return
 				}
 
 				fmt.Println("Running dependency installation command:", dependencyCommand)
-				if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
-					fmt.Println("Error executing dependency command:", depErr)
+				lastError = executeCommand(directory, dependencyCommand)
+				if lastError != nil {
+					fmt.Println("Error executing dependency command:", lastError)
 					time.Sleep(retryDelay)
 				} else {
 					// Retry executing lint command
-					if err := executeCommand(directory, refactoredLintCommand); err != nil {
-						fmt.Println("Error executing lint command:", err)
+					lastError = executeCommand(directory, refactoredLintCommand)
+					if lastError != nil {
+						fmt.Println("Error executing lint command:", lastError)
 						time.Sleep(retryDelay)
 					} else {
 						success = true
@@ -120,7 +127,7 @@ var lintCmd = &cobra.Command{
 		}
 
 		if !success {
-			fmt.Println("Failed to generate or execute lint command after retries.")
+			fmt.Println("Failed to generate or execute lint command after retries:", lastError)
 			return
 		}
 
