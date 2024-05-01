@@ -70,8 +70,14 @@ jobs:
       - name: Generate Documentation
         run: go run main.go gendoc
 
+      - name: Install zip on Windows
+        if: runner.os == 'Windows'
+        run: |
+          choco install zip -y
+
       - name: Zip Documentation and README
-        run: zip -r documentation-${{ runner.os }}-${{ matrix.arch }}.zip README.md docs/
+        run: |
+          zip -r documentation-${{ runner.os }}-${{ matrix.arch }}.zip README.md docs/
         shell: bash
 
       - name: Upload Documentation and README Artifact
