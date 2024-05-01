@@ -39,13 +39,13 @@ jobs:
 
       - name: Run Ephemyral Commands
         run: |
-          echo "Linting..."
-          golangci-lint run ./cmd ./pkg
           echo "Testing..."
           go test ./...
           echo "Generating Docs..."
           go run main.go gendoc
-
+          echo "Linting..."
+          golangci-lint run ./cmd ./pkg
+          
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'
     needs: [build-and-test]

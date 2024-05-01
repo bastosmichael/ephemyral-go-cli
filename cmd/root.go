@@ -78,8 +78,6 @@ func GenerateAndMergeDocs() {
 		}
 	}
 
-	documentation.String()
-
 	// Write the new README to the file system, replacing the existing one
 	err = ioutil.WriteFile("README.md", []byte(documentation.String()), 0644)
 	if err != nil {

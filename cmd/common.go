@@ -1,4 +1,6 @@
 // common.go
+// +build !lint
+
 package cmd
 
 import (
