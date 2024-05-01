@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/fatih/color"
 )
 
@@ -118,7 +119,7 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 	return client.Do(req)
 }
 
-func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
+func GetGPT4ResponseWithPrompt(prompt string, convID *uuid.UUID) (string, error) {
 	apiKey := getAPIKey() 
 
 	payloadBytes, err := preparePayload(prompt)

@@ -1,3 +1,4 @@
+//go:build !lint
 // +build !lint
 
 package cmd
@@ -11,10 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, retryCount int, retryDelay time.Duration) {
+func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) {
 	// Reading the original file content
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -29,10 +31,10 @@ func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, retryC
 			time.Sleep(retryDelay)
 		}
 
-		success := refactorFile(filePath, string(fileContent), userPrompt, newFilePath)
+		success := refactorFile(filePath, string(fileContent), userPrompt, newFilePath, convID)
 		if success {
 			// If refactor succeeds, run the existing build command
-			runExistingBuildCommand(filePath, retryCount, retryDelay)
+			runExistingBuildCommand(filePath, convID, retryCount, retryDelay)
 			return
 		}
 	}
@@ -46,7 +48,7 @@ func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, retryC
 	}
 }
 
-func refactorFile(filePath, fileContent, userPrompt, newFilePath string) bool {
+func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID *uuid.UUID) bool {
 	fullPrompt := fmt.Sprintf(
 		RefactorPromptPattern,
 		userPrompt,
@@ -54,7 +56,7 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string) bool {
 	)
 
 	gpt4client.SetDebug(false)
-	refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+	refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil {
 		fmt.Println("Error getting suggestion from LLM:", err)
 		return false
@@ -86,7 +88,7 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string) bool {
 	return true
 }
 
-func runExistingBuildCommand(filePath string, retryCount int, retryDelay time.Duration) {
+func runExistingBuildCommand(filePath string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) {
 	// Find directory containing ".ephemyral"
 	directory, err := findEphemyralDirectory(filePath)
 	if err != nil {
@@ -102,7 +104,7 @@ func runExistingBuildCommand(filePath string, retryCount int, retryDelay time.Du
 	}
 
 	if existingCommand != "" {
-		if err := retryExecution(directory, existingCommand, "build", retryCount, retryDelay); err != nil {
+		if err := retryExecution(directory, existingCommand, "build", convID, retryCount, retryDelay); err != nil {
 			fmt.Println("Failed to execute build command:", err)
 		} else {
 			fmt.Println("Build command executed successfully.")
@@ -119,6 +121,8 @@ and applying the suggested changes, replacing the file content or creating new f
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
+
+		convID := new(uuid.UUID)
 
 		userPrompt := DefaultRefactorPrompt
 		if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
@@ -151,7 +155,7 @@ and applying the suggested changes, replacing the file content or creating new f
 					return err
 				}
 				if !info.IsDir() {
-					executeRefactorWithRetries(path, userPrompt, newFilePath, defaultRetryCount, retryDelay)
+					executeRefactorWithRetries(path, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay)
 				}
 				return nil
 			})
@@ -161,7 +165,7 @@ and applying the suggested changes, replacing the file content or creating new f
 				return
 			}
 		} else {
-			executeRefactorWithRetries(filePath, userPrompt, newFilePath, defaultRetryCount, retryDelay)
+			executeRefactorWithRetries(filePath, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay)
 		}
 	},
 }

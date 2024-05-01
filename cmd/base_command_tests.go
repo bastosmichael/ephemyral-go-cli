@@ -8,10 +8,11 @@ import (
 
 	gpt4client "ephemyral/pkg"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-func generateTestCommand(directory string) (string, error) {
+func generateTestCommand(directory string, convID *uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
@@ -20,7 +21,7 @@ func generateTestCommand(directory string) (string, error) {
 	fullPrompt := TestCommandPrompt + strings.Join(filesList, "\n")
 
 	gpt4client.SetDebug(false)
-	return gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+	return gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 }
 
 var testCmd = &cobra.Command{
@@ -38,7 +39,9 @@ var testCmd = &cobra.Command{
 			return
 		}
 		
-		if err := executeCommandOfType(directory, "test", defaultRetryCount, retryDelay); err != nil {
+		convID := new(uuid.UUID)
+
+		if err := executeCommandOfType(directory, "test", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)
 			return
 		}
