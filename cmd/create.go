@@ -3,11 +3,12 @@ package cmd
 import (
 	gpt4client "ephemyral/pkg"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 var createCmd = &cobra.Command{
