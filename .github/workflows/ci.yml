@@ -35,18 +35,16 @@ jobs:
 
       - name: Build Ephemyral Binary
         run: |
-          go build
+          go build ./cmd ./pkg
 
       - name: Run Ephemyral Commands
         run: |
-          echo "Building..."
-          ./ephemyral build ../ephemyral-go/
           echo "Linting..."
-          ./ephemyral lint ../ephemyral-go/
+          golangci-lint run ./cmd ./pkg
           echo "Testing..."
-          ./ephemyral test ../ephemyral-go/
+          go test ./...
           echo "Generating Docs..."
-          ./ephemyral docs ../ephemyral-go/
+          go run main.go gendoc
 
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'
