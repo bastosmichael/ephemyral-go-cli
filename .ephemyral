@@ -1,4 +1,4 @@
 build_command: go build ./cmd ./pkg
 test_command: go test ./...
-lint_command: golangci-lint run .
+lint_command: golangci-lint run ./cmd ./pkg
 docs_command: go run main.go gendoc
