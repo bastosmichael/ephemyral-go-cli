@@ -19,7 +19,7 @@ func generateBuildCommand(directory string, convID uuid.UUID) (string, error) {
 	}
 
 	fullPrompt := BuildCommandPrompt + strings.Join(filesList, "\n")
-	gpt4client.SetDebug(true)
+	gpt4client.SetDebug(false)
 	buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil || strings.TrimSpace(buildCommand) == "" {
 		return "", fmt.Errorf("error generating or empty build command")
