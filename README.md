@@ -1,3 +1,4 @@
+
 ## ephemyral
 
 Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
