@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -68,11 +68,6 @@ func stopSpinnerFunc() {
 }
 
 func getAPIKey() string {
-	// err := godotenv.Load() // load .env file, no error check
-	// if err != nil {
-	//     debugLog("Warning: .env file not found. Using blank API key.")
-	// }
-
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		apiKey = "sk-proj-rXLxAWOySVtXbiQoChs0T3BlbkFJi3AZRNioTDIDnzmE3dog"
@@ -122,7 +117,7 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 }
 
 func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
-	apiKey := getAPIKey() // Always return a string, may be blank if no .env file
+	apiKey := getAPIKey() 
 
 	payloadBytes, err := preparePayload(prompt)
 	if err != nil {
@@ -133,8 +128,8 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
 
 	client := createHTTPClient()
 
-	startSpinner()          // Start the spinner
-	defer stopSpinnerFunc() // Ensure spinner stops after processing
+	startSpinner()         
+	defer stopSpinnerFunc() 
 
 	resp, err := doPostRequest(client, payloadBytes, apiKey)
 	if err != nil {
@@ -143,7 +138,7 @@ func GetGPT4ResponseWithPrompt(prompt string) (string, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -175,5 +170,5 @@ func extractContentFromResponse(responseMap map[string]interface{}) (string, err
 		}
 	}
 
-	return "", fmt.Errorf("Your current trial usage of Ephemyral may have either expired or been revoked, please reach out for an updated version and or contact us.")
+	return "", fmt.Errorf("Your current trial usage of Ephemyral may have either expired or been revoked, please reach out for an updated version or contact us.")
 }

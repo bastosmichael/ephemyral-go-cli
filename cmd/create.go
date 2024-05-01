@@ -3,7 +3,6 @@ package cmd
 import (
 	gpt4client "ephemyral/pkg"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,7 +63,7 @@ func generateNewFile(filePath, userPrompt string) {
 		return
 	}
 
-	err = ioutil.WriteFile(filePath, []byte(newFileContent), 0644)
+	err = os.WriteFile(filePath, []byte(newFileContent), 0644)
 	if err != nil {
 		fmt.Println("Error writing new file:", err)
 		return
