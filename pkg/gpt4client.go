@@ -114,7 +114,7 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer " + apiKey)
 
 	return client.Do(req)
 }
@@ -141,10 +141,16 @@ func GetGPT4ResponseWithPrompt(prompt string, convID uuid.UUID) (string, error) 
 
 	defer resp.Body.Close()
 
+	// Log HTTP status code
+	debugLog("HTTP Status Code: %d", resp.StatusCode)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
+
+	// Log full response body for debugging
+	debugLog("Response Body: %s", string(body))
 
 	var responseMap map[string]interface{}
 	if err := json.Unmarshal(body, &responseMap); err != nil {
@@ -155,8 +161,12 @@ func GetGPT4ResponseWithPrompt(prompt string, convID uuid.UUID) (string, error) 
 }
 
 func extractContentFromResponse(responseMap map[string]interface{}) (string, error) {
-	if content, ok := responseMap["error"].(string); ok {
-		return "", fmt.Errorf(content)
+	// Check for errors in the API response
+	if apiErr, ok := responseMap["error"].(map[string]interface{}); ok {
+		errMsg, ok := apiErr["message"].(string)
+		if ok {
+			return "", fmt.Errorf("API Error: %s", errMsg)
+		}
 	}
 
 	choices, ok := responseMap["choices"].([]interface{})
