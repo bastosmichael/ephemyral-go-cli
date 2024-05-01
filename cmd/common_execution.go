@@ -40,7 +40,7 @@ func getExistingCommandOrError(directory, commandType string) (string, error) {
 }
 
 // Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
-func executeCommandOfType(directory, commandType string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) error {
+func executeCommandOfType(directory, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	// Try to get an existing command of the given type.
 	existingCommand, err := getExistingCommandOrError(directory, commandType)
 	if err != nil {
@@ -60,7 +60,7 @@ func executeCommandOfType(directory, commandType string, convID *uuid.UUID, retr
 }
 
 // Retries execution of a given command a specified number of times.
-func retryExecution(directory, command, commandType string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) error {
+func retryExecution(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	generationFailed := false
 	executionFailed := false
 

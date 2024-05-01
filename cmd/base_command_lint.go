@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generateLintCommand(directory string, convID *uuid.UUID) (string, error) {
+func generateLintCommand(directory string, convID uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
@@ -47,7 +47,8 @@ var lintCmd = &cobra.Command{
 			return
 		}
 
-		convID := new(uuid.UUID)
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		if err := executeCommandOfType(directory, "lint", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)

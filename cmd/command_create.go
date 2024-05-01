@@ -23,7 +23,8 @@ If the file path is a directory, it uses a query to determine the file names and
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
 
-		convID := new(uuid.UUID)
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		var userPrompt string
 		if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
@@ -55,7 +56,7 @@ If the file path is a directory, it uses a query to determine the file names and
 	},
 }
 
-func generateNewFile(filePath string, userPrompt string, convID *uuid.UUID) {
+func generateNewFile(filePath string, userPrompt string, convID uuid.UUID) {
 	if _, err := os.Stat(filePath); err == nil {
 		fmt.Println("File already exists:", filePath)
 		return

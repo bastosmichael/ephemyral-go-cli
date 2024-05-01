@@ -14,7 +14,7 @@ import (
 var retryDelay = 2 * time.Second
 
 // Function type for generating commands.
-type commandGenerator func(directory string, convID *uuid.UUID) (string, error)
+type commandGenerator func(directory string, convID uuid.UUID) (string, error)
 
 // Map associating command types with their respective generation functions.
 var commandGenerators = map[string]commandGenerator{
@@ -25,7 +25,7 @@ var commandGenerators = map[string]commandGenerator{
 }
 
 // Generates and executes a new command of a given type.
-func generateAndExecuteCommand(directory, commandType string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) error {
+func generateAndExecuteCommand(directory, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	var refactoredCommand string
 
 	generationFailed := false
@@ -95,7 +95,7 @@ func generateAndExecuteCommand(directory, commandType string, convID *uuid.UUID,
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
 }
 
-func generateDependencyCommand(failedCommand, errorMessage string, convID *uuid.UUID) (string, error) {
+func generateDependencyCommand(failedCommand, errorMessage string, convID uuid.UUID) (string, error) {
 	// Determine the operating system
 	osType := runtime.GOOS
 

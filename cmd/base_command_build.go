@@ -12,14 +12,14 @@ import (
 )
 
 // Generates a build command.
-func generateBuildCommand(directory string, convID *uuid.UUID) (string, error) {
+func generateBuildCommand(directory string, convID uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
 	}
 
 	fullPrompt := BuildCommandPrompt + strings.Join(filesList, "\n")
-	gpt4client.SetDebug(false)
+	gpt4client.SetDebug(true)
 	buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil || strings.TrimSpace(buildCommand) == "" {
 		return "", fmt.Errorf("error generating or empty build command")
@@ -43,7 +43,8 @@ var buildCmd = &cobra.Command{
 			return
 		}
 
-		convID := new(uuid.UUID)
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		if err := executeCommandOfType(directory, "build", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)

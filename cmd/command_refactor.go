@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) {
+func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) {
 	// Reading the original file content
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -48,7 +48,7 @@ func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID
 	}
 }
 
-func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID *uuid.UUID) bool {
+func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID uuid.UUID) bool {
 	fullPrompt := fmt.Sprintf(
 		RefactorPromptPattern,
 		userPrompt,
@@ -88,7 +88,7 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID 
 	return true
 }
 
-func runExistingBuildCommand(filePath string, convID *uuid.UUID, retryCount int, retryDelay time.Duration) {
+func runExistingBuildCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) {
 	// Find directory containing ".ephemyral"
 	directory, err := findEphemyralDirectory(filePath)
 	if err != nil {
@@ -122,7 +122,8 @@ and applying the suggested changes, replacing the file content or creating new f
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
 
-		convID := new(uuid.UUID)
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		userPrompt := DefaultRefactorPrompt
 		if len(args) > 1 && strings.TrimSpace(args[1]) != "" {

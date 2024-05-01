@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generateDocsCommand(directory string, convID *uuid.UUID) (string, error) {
+func generateDocsCommand(directory string, convID uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
@@ -47,7 +47,8 @@ var docsCmd = &cobra.Command{
 			return
 		}
 
-		convID := new(uuid.UUID)
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		if err := executeCommandOfType(directory, "docs", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)
