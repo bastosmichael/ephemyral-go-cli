@@ -5,7 +5,6 @@ import (
 	gpt4client "ephemyral/pkg"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,7 +42,7 @@ and applying the suggested changes, replacing the file content or creating new f
 
 		if fileInfo.IsDir() {
 			// Handle directory
-			filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+			err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
 					fmt.Println("Error accessing path during walk:", path, err)
 					return err
@@ -53,6 +52,11 @@ and applying the suggested changes, replacing the file content or creating new f
 				}
 				return nil
 			})
+
+			if err != nil {
+				fmt.Println("Error during directory walk:", err)
+				return
+			}
 		} else {
 			// Handle single file
 			refactorFile(filePath, userPrompt, newFilePath)
@@ -61,7 +65,7 @@ and applying the suggested changes, replacing the file content or creating new f
 }
 
 func refactorFile(filePath, userPrompt, newFilePath string) {
-	fileContent, err := ioutil.ReadFile(filePath)
+	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
@@ -97,7 +101,7 @@ func refactorFile(filePath, userPrompt, newFilePath string) {
 		}
 	}
 
-	err = ioutil.WriteFile(targetFilePath, []byte(refactoredContent), 0644)
+	err = os.WriteFile(targetFilePath, []byte(refactoredContent), 0644)
 	if err != nil {
 		fmt.Println("Error writing file:", err)
 		return

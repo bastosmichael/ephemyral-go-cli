@@ -6,3 +6,7 @@ issues:
       linters: ['all']
     - path: "^third_party/.*$"
       linters: ['all']
+
+linters:
+  enable:
+    - staticcheck
