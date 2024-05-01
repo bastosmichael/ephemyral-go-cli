@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Ephemyral Binary
         run: |
-          go build -o ./ephemyral ./...
+          go build
 
       - name: Run Ephemyral Commands
         run: |
