@@ -70,25 +70,47 @@ var buildCmd = &cobra.Command{
 			return
 		}
 
-		// Retry generating and executing the build command
+		// Generate and execute a new build command
 		var refactoredBuildCommand string
 		success := false
 		for i := 0; i < defaultRetryCount; i++ {
 			buildCommand, err := generateBuildCommand(directory)
 			if err != nil {
 				fmt.Println("Error generating build command:", err)
-				time.Sleep(retryDelay) // wait before retrying
-			} else {
-				refactoredBuildCommand = filterOutCodeBlocks(buildCommand)
-				fmt.Println("Successfully discovered build command:", refactoredBuildCommand) // Success message
-				if err := executeCommand(directory, refactoredBuildCommand); err != nil {
-					fmt.Println("Error executing build command:", err)
-					time.Sleep(retryDelay) // wait before retrying
-				} else {
-					success = true
-					fmt.Println("Successfully executed build command:", refactoredBuildCommand) // Success message
-					break
+				time.Sleep(retryDelay)
+				continue
+			}
+
+			refactoredBuildCommand = filterOutCodeBlocks(buildCommand)
+			fmt.Println("Successfully generated build command:", refactoredBuildCommand)
+
+			if err := executeCommand(directory, refactoredBuildCommand); err != nil {
+				// Handle missing dependency error
+				dependencyCommand, depErr := generateDependencyCommand(refactoredBuildCommand, err.Error())
+				if depErr != nil {
+					fmt.Println("Error generating dependency command:", depErr)
+					return
 				}
+
+				fmt.Println("Running dependency installation command:", dependencyCommand)
+				if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
+					fmt.Println("Error executing dependency command:", depErr)
+					time.Sleep(retryDelay)
+				} else {
+					// Retry executing build command
+					if err := executeCommand(directory, refactoredBuildCommand); err != nil {
+						fmt.Println("Error executing build command:", err)
+						time.Sleep(retryDelay)
+					} else {
+						success = true
+						fmt.Println("Successfully executed build command after dependency installation:", refactoredBuildCommand)
+						break
+					}
+				}
+			} else {
+				success = true
+				fmt.Println("Successfully executed build command:", refactoredBuildCommand)
+				break
 			}
 		}
 

@@ -32,8 +32,8 @@ func generateDocsCommand(directory string) (string, error) {
 
 var docsCmd = &cobra.Command{
 	Use:   "docs [directory]",
-	Short: "Use a machine learning model to generate and execute a command for generating documentation, enhancing the clarity and maintainability of the codebase.",
-	Long:  "The 'docs' command generates a command line that, when executed, produces documentation (such as a README or API documentation) for the project's files. It then updates the '.ephemyral' configuration file with the new command and executes it. This ensures that the project is well-documented and easier to maintain.",
+	Short: "Generate and execute a command to generate documentation, enhancing the codebase's maintainability.",
+	Long:  "The 'docs' command creates a command to produce documentation (like a README or API documentation) for the project's files. It then updates the '.ephemyral' configuration file with the new command and executes it.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		directory := args[0]
@@ -45,7 +45,7 @@ var docsCmd = &cobra.Command{
 			return
 		}
 
-		// Try to get an existing docs command
+		// Check for existing docs command
 		existingDocsCommand, err := getExistingCommand(directory, "docs")
 		if err != nil {
 			fmt.Println("Error reading .ephemyral file:", err)
@@ -53,16 +53,15 @@ var docsCmd = &cobra.Command{
 		}
 
 		if existingDocsCommand != "" {
-			// Retry execution with the existing command
 			success := false
 			for i := 0; i < defaultRetryCount; i++ {
 				fmt.Println("Running existing docs command:", existingDocsCommand)
 				if err := executeCommand(directory, existingDocsCommand); err != nil {
 					fmt.Println("Error executing docs command:", err)
-					time.Sleep(retryDelay) // wait before retrying
+					time.Sleep(retryDelay)
 				} else {
 					success = true
-					fmt.Println("Successfully executed existing docs command:", existingDocsCommand) // Success message
+					fmt.Println("Successfully executed existing docs command:", existingDocsCommand)
 					break
 				}
 			}
@@ -75,25 +74,47 @@ var docsCmd = &cobra.Command{
 			return
 		}
 
-		// Retry generating and executing the docs command
+		// Generate and execute a new docs command
 		var refactoredDocsCommand string
 		success := false
 		for i := 0; i < defaultRetryCount; i++ {
 			docsCommand, err := generateDocsCommand(directory)
 			if err != nil {
 				fmt.Println("Error generating docs command:", err)
-				time.Sleep(retryDelay) // wait before retrying
-			} else {
-				refactoredDocsCommand = filterOutCodeBlocks(docsCommand)
-				fmt.Println("Successfully discovered docs command:", refactoredDocsCommand) // Success message
-				if err := executeCommand(directory, refactoredDocsCommand); err != nil {
-					fmt.Println("Error executing docs command:", err)
-					time.Sleep(retryDelay) // wait before retrying
-				} else {
-					success = true
-					fmt.Println("Successfully executed docs command:", refactoredDocsCommand) // Success message
-					break
+				time.Sleep(retryDelay)
+				continue
+			}
+
+			refactoredDocsCommand = filterOutCodeBlocks(docsCommand)
+			fmt.Println("Successfully generated docs command:", refactoredDocsCommand)
+
+			if err := executeCommand(directory, refactoredDocsCommand); err != nil {
+				// Handle missing dependency error
+				dependencyCommand, depErr := generateDependencyCommand(refactoredDocsCommand, err.Error())
+				if depErr != nil {
+					fmt.Println("Error generating dependency command:", depErr)
+					return
 				}
+
+				fmt.Println("Running dependency installation command:", dependencyCommand)
+				if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
+					fmt.Println("Error executing dependency command:", depErr)
+					time.Sleep(retryDelay)
+				} else {
+					// Retry executing docs command
+					if err := executeCommand(directory, refactoredDocsCommand); err != nil {
+						fmt.Println("Error executing docs command:", err)
+						time.Sleep(retryDelay)
+					} else {
+						success = true
+						fmt.Println("Successfully executed docs command after dependency installation:", refactoredDocsCommand)
+						break
+					}
+				}
+			} else {
+				success = true
+				fmt.Println("Successfully executed docs command:", refactoredDocsCommand)
+				break
 			}
 		}
 
@@ -108,7 +129,7 @@ var docsCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Println("Successfully updated .ephemyral with docs command:", refactoredDocsCommand) // Success message
+		fmt.Println("Successfully updated .ephemyral with docs command:", refactoredDocsCommand)
 	},
 }
 

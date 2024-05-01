@@ -2,9 +2,12 @@
 package cmd
 
 import (
+	gpt4client "ephemyral/pkg"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -20,6 +23,25 @@ type EphemyralFile struct {
 }
 
 var retryDelay = 2 * time.Second
+
+func generateDependencyCommand(failedCommand, errorMessage string) (string, error) {
+	// Determine the operating system
+	osType := runtime.GOOS
+
+	// Construct a prompt to handle missing dependencies
+	prompt := fmt.Sprintf("The following command '%s' failed with the error '%s'. Based on this error and the current operating system '%s', provide the simplest single-line command to install all necessary dependencies. The response should contain no comments, explanations, or code blocks, and if multiple commands are needed, they should be separated by '&&'. Include necessary flags like '-y' for automatic confirmation:\n", failedCommand, errorMessage, osType)
+
+	dependencyCommand, err := gpt4client.GetGPT4ResponseWithPrompt(prompt)
+	if err != nil {
+		return "", err
+	}
+
+	if strings.TrimSpace(dependencyCommand) == "" {
+		return "", fmt.Errorf("received empty dependency command")
+	}
+
+	return dependencyCommand, nil
+}
 
 // getFileList retrieves a list of all non-directory file names in the specified directory and its subdirectories,
 // skipping specified directories like ".git".
@@ -110,6 +132,8 @@ func getExistingCommand(directory, key string) (string, error) {
 		return ephemyral.TestCommand, nil
 	} else if key == "lint" {
 		return ephemyral.LintCommand, nil
+	} else if key == "docs" {
+		return ephemyral.DocsCommand, nil
 	}
 
 	return "", nil
