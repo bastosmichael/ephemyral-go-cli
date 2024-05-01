@@ -9,12 +9,13 @@ permissions:
 
 jobs:
   build-and-test:
-    name: 'Build and Test 🚀'
+    name: 'Build, Test, Lint, and Docs 🚀'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -27,12 +28,17 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
-      - name: Test
+
+      - name: Build Ephemyral Binary
         run: |
-          go test ./... -v
-        env:
-          GO111MODULE: on
+          go build -o ./ephemyral ./...
+
+      - name: Run Ephemyral Commands
+        run: |
+          ./ephemyral build .
+          ./ephemyral lint .
+          ./ephemyral test .
+          ./ephemyral docs .
 
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'
