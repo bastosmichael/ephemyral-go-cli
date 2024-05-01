@@ -1,4 +1,5 @@
 // common.go
+//go:build !lint
 // +build !lint
 
 package cmd
@@ -18,10 +19,10 @@ import (
 
 // EphemyralFile represents the structure of the .ephemyral YAML file.
 type EphemyralFile struct {
-	BuildCommand string `yaml:"build_command"`
-	TestCommand  string `yaml:"test_command"`
-	LintCommand  string `yaml:"lint_command"`
-	DocsCommand  string `yaml:"docs_command"`
+	BuildCommand string `yaml:"build-command"`
+	TestCommand  string `yaml:"test-command"`
+	LintCommand  string `yaml:"lint-command"`
+	DocsCommand  string `yaml:"docs-command"`
 }
 
 var retryDelay = 2 * time.Second

@@ -1,6 +1,8 @@
 issues:
-  exclude-dirs-use-default: false
-  exclude-dirs:
-    - vendor
-    - external
-
+  exclude-rules:
+    - path: "^${GOROOT}.*$"
+      linters: ['all']
+    - path: "^vendor/.*$"
+      linters: ['all']
+    - path: "^third_party/.*$"
+      linters: ['all']
