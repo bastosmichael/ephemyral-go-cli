@@ -1,0 +1,12 @@
+issues:
+  exclude-rules:
+    - path: "^${GOROOT}.*$"
+      linters: ['all']
+    - path: "^vendor/.*$"
+      linters: ['all']
+    - path: "^third_party/.*$"
+      linters: ['all']
+
+linters:
+  enable:
+    - staticcheck

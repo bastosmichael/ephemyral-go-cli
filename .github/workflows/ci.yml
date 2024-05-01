@@ -9,12 +9,13 @@ permissions:
 
 jobs:
   build-and-test:
-    name: 'Build and Test 🚀'
+    name: 'Build, Test, Lint, and Docs 🚀'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -27,13 +28,24 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
-      - name: Test
-        run: |
-          go test ./... -v
-        env:
-          GO111MODULE: on
 
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.52.2
+
+      - name: Build Ephemyral Binary
+        run: |
+          go build ./cmd ./pkg
+
+      - name: Run Ephemyral Commands
+        run: |
+          echo "Testing..."
+          go test ./...
+          echo "Generating Docs..."
+          go run main.go gendoc
+          # echo "Linting..."
+          # golangci-lint run ./cmd ./pkg
+          
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'
     needs: [build-and-test]

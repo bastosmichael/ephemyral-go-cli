@@ -1,13 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
 	"strings"
-	"bufio"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -67,7 +66,10 @@ func GenerateAndMergeDocs() {
 
 	// Clean and rewrite links for each document, then concatenate them
 	var documentation strings.Builder
-	files, _ := ioutil.ReadDir("./docs")
+	files, err := os.ReadDir("./docs")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for _, file := range files {
 		if !file.IsDir() {
@@ -78,10 +80,8 @@ func GenerateAndMergeDocs() {
 		}
 	}
 
-	documentation.String()
-
 	// Write the new README to the file system, replacing the existing one
-	err = ioutil.WriteFile("README.md", []byte(documentation.String()), 0644)
+	err = os.WriteFile("README.md", []byte(documentation.String()), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
