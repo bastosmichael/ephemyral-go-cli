@@ -35,11 +35,10 @@ var testCmd = &cobra.Command{
 			fmt.Println("Error reading retry count:", err)
 			return
 		}
-
-		commandType := "test" // Set the desired command type here
-
-		if err := executeCommandOfType(directory, commandType, defaultRetryCount, retryDelay); err != nil {
+		
+		if err := executeCommandOfType(directory, "test", defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)
+			return
 		}
 	},
 }

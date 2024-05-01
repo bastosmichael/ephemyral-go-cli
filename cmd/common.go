@@ -158,14 +158,17 @@ func updateEphemyralFile(directory, key, command string) error {
 		}
 	}
 
-	if key == "build" {
+	switch key {
+	case "build":
 		ephemyral.BuildCommand = command
-	} else if key == "test" {
+	case "test":
 		ephemyral.TestCommand = command
-	} else if key == "lint" {
+	case "lint":
 		ephemyral.LintCommand = command
-	} else if key == "docs" {
+	case "docs":
 		ephemyral.DocsCommand = command
+	default:
+		return fmt.Errorf("unknown key: %s", key)
 	}
 
 	data, err := yaml.Marshal(&ephemyral)
@@ -173,7 +176,13 @@ func updateEphemyralFile(directory, key, command string) error {
 		return err
 	}
 
-	return os.WriteFile(filename, data, 0644)
+	if err := os.WriteFile(filename, data, 0644); err != nil {
+		fmt.Println("Error updating .ephemyral file:", err)
+		return err
+	}
+
+	fmt.Printf("Successfully updated .ephemyral with %s command: %s\n", key, command)
+	return nil
 }
 
 func filterOutCodeBlocks(content string) string {
@@ -202,10 +211,10 @@ type commandGenerator func(directory string) (string, error)
 
 // Map associating command types with their respective generation functions.
 var commandGenerators = map[string]commandGenerator{
-	"test": generateTestCommand,
-	"lint": generateLintCommand,
+	"test":  generateTestCommand,
+	"lint":  generateLintCommand,
 	"build": generateBuildCommand,
-	"docs": generateDocsCommand,
+	"docs":  generateDocsCommand,
 }
 
 // Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
@@ -230,22 +239,34 @@ func executeCommandOfType(directory, commandType string, retryCount int, retryDe
 
 // Retries execution of a given command a specified number of times.
 func retryExecution(directory, command, commandType string, retryCount int, retryDelay time.Duration) error {
+	generationFailed := false
+	executionFailed := false
+
 	for i := 0; i < retryCount; i++ {
 		fmt.Printf("Running %s command: %s\n", commandType, command)
 		if err := executeCommand(directory, command); err != nil {
 			fmt.Println("Error executing command:", err)
+			executionFailed = true
 			time.Sleep(retryDelay)
 		} else {
 			fmt.Printf("Successfully executed %s command: %s\n", commandType, command)
 			return nil
 		}
 	}
+
+	if generationFailed && executionFailed {
+		return fmt.Errorf("failed to generate or execute %s command after retries", commandType)
+	}
+
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
 }
 
 // Generates and executes a new command of a given type.
 func generateAndExecuteCommand(directory, commandType string, retryCount int, retryDelay time.Duration) error {
 	var refactoredCommand string
+
+	generationFailed := false
+	executionFailed := false
 
 	for i := 0; i < retryCount; i++ {
 		// Generate a new command using the appropriate generator function.
@@ -257,6 +278,7 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 		command, err := generator(directory)
 		if err != nil {
 			fmt.Println("Error generating command:", err)
+			generationFailed = true
 			time.Sleep(retryDelay)
 			continue
 		}
@@ -280,16 +302,31 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 				// Retry executing the original command.
 				if err := executeCommand(directory, refactoredCommand); err != nil {
 					fmt.Println("Error executing command:", err)
+					executionFailed = true
 					time.Sleep(retryDelay)
 				} else {
 					fmt.Printf("Successfully executed %s command after dependency installation: %s\n", commandType, refactoredCommand)
+					// Update the .ephemyral file with the successful command
+					if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
+						fmt.Println("Error updating .ephemyral file:", err)
+						return err
+					}
 					return nil
 				}
 			}
 		} else {
 			fmt.Printf("Successfully executed %s command: %s\n", commandType, refactoredCommand)
+			// Update the .ephemyral file with the successful command
+			if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
+				fmt.Println("Error updating .ephemyral file:", err)
+				return err
+			}
 			return nil
 		}
+	}
+
+	if generationFailed && executionFailed {
+		return fmt.Errorf("failed to generate or execute %s command after retries", commandType)
 	}
 
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
