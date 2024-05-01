@@ -132,6 +132,8 @@ func getExistingCommand(directory, key string) (string, error) {
 		return ephemyral.TestCommand, nil
 	} else if key == "lint" {
 		return ephemyral.LintCommand, nil
+	} else if key == "docs" {
+		return ephemyral.DocsCommand, nil
 	}
 
 	return "", nil
