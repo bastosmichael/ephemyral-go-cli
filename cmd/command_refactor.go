@@ -15,30 +15,42 @@ import (
 )
 
 func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, retryCount int, retryDelay time.Duration) {
+	// Reading the original file content
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	// Attempting the retries
 	for retry := 0; retry <= retryCount; retry++ {
 		if retry > 0 {
 			fmt.Println("Retrying refactor... Attempt", retry)
 			time.Sleep(retryDelay)
 		}
 
-		success := refactorFile(filePath, userPrompt, newFilePath)
+		success := refactorFile(filePath, string(fileContent), userPrompt, newFilePath)
 		if success {
-			break
+			// If refactor succeeds, run the existing build command
+			runExistingBuildCommand(filePath, retryCount, retryDelay)
+			return
 		}
+	}
+
+	// If all retries fail, restore the original content
+	err = os.WriteFile(filePath, fileContent, 0644)
+	if err != nil {
+		fmt.Println("Error restoring the original file content:", err)
+	} else {
+		fmt.Println("All retries failed, original content restored.")
 	}
 }
 
-func refactorFile(filePath, userPrompt, newFilePath string) bool {
-	fileContent, err := os.ReadFile(filePath)
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return false
-	}
-
+func refactorFile(filePath, fileContent, userPrompt, newFilePath string) bool {
 	fullPrompt := fmt.Sprintf(
 		RefactorPromptPattern,
 		userPrompt,
-		string(fileContent),
+		fileContent,
 	)
 
 	gpt4client.SetDebug(false)
@@ -74,6 +86,31 @@ func refactorFile(filePath, userPrompt, newFilePath string) bool {
 	return true
 }
 
+func runExistingBuildCommand(filePath string, retryCount int, retryDelay time.Duration) {
+	// Find directory containing ".ephemyral"
+	directory, err := findEphemyralDirectory(filePath)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	// Retrieve existing build command
+	existingCommand, err := getExistingCommandOrError(directory, "build")
+	if err != nil {
+		fmt.Println("Error reading existing build command:", err)
+		return
+	}
+
+	if existingCommand != "" {
+		if err := retryExecution(directory, existingCommand, "build", retryCount, retryDelay); err != nil {
+			fmt.Println("Failed to execute build command:", err)
+		} else {
+			fmt.Println("Build command executed successfully.")
+			return
+		}
+	}
+}
+
 var refactorCmd = &cobra.Command{
 	Use:   "refactor [file path] [prompt] [new file path]",
 	Short: "Utilize an advanced LLM to refactor given files or all files in a directory based on a prompt, outputting the improved code to a new location.",
@@ -99,7 +136,7 @@ and applying the suggested changes, replacing the file content or creating new f
 			return
 		}
 
-		retryDelay := 2 * time.Second // Example retry delay
+		retryDelay := 2 * time.Second
 
 		fileInfo, err := os.Stat(filePath)
 		if err != nil {

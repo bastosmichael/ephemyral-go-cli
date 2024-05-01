@@ -29,12 +29,20 @@ func executeCommand(directory, command string) error {
 	return nil
 }
 
+func getExistingCommandOrError(directory, commandType string) (string, error) {
+	existingCommand, err := getExistingCommand(directory, commandType)
+	if err != nil {
+		return "", fmt.Errorf("error reading existing %s command: %v", commandType, err)
+	}
+	return existingCommand, nil
+}
+
 // Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
 func executeCommandOfType(directory, commandType string, retryCount int, retryDelay time.Duration) error {
 	// Try to get an existing command of the given type.
-	existingCommand, err := getExistingCommand(directory, commandType)
+	existingCommand, err := getExistingCommandOrError(directory, commandType)
 	if err != nil {
-		return fmt.Errorf("error reading existing %s command: %v", commandType, err)
+		return err
 	}
 
 	if existingCommand != "" {

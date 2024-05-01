@@ -1,3 +1,4 @@
+//go:build !lint
 // +build !lint
 
 package cmd
@@ -5,6 +6,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -88,4 +91,25 @@ func updateEphemyralFile(directory, key, command string) error {
 
 	fmt.Printf("Successfully updated .ephemyral with %s command: %s\n", key, command)
 	return nil
+}
+
+func findEphemyralDirectory(filePath string) (string, error) {
+	dir := filepath.Dir(filePath)
+
+	for {
+		// Check if ".ephemyral" file exists in the current directory
+		ephemyralPath := filepath.Join(dir, ".ephemyral")
+		if _, err := os.Stat(ephemyralPath); err == nil {
+			return dir, nil
+		}
+
+		// Move up to the parent directory
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir { // If we've reached the root directory
+			break
+		}
+		dir = parentDir
+	}
+
+	return "", fmt.Errorf(".ephemyral file not found in any directory upwards from %s", filePath)
 }
