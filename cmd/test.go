@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	gpt4client "ephemyral/pkg"
 
@@ -37,92 +36,11 @@ var testCmd = &cobra.Command{
 			return
 		}
 
-		// Try to get existing test command
-		existingTestCommand, err := getExistingCommand(directory, "test")
-		if err != nil {
-			fmt.Println("Error reading .ephemyral file:", err)
-			return
+		commandType := "test" // Set the desired command type here
+
+		if err := executeCommandOfType(directory, commandType, defaultRetryCount, retryDelay); err != nil {
+			fmt.Println(err)
 		}
-
-		if existingTestCommand != "" {
-			// Retry execution with the existing command
-			success := false
-			for i := 0; i < defaultRetryCount; i++ {
-				fmt.Println("Running existing test command:", existingTestCommand)
-				if err := executeCommand(directory, existingTestCommand); err != nil {
-					fmt.Println("Error executing test command:", err)
-					time.Sleep(retryDelay) // wait before retrying
-				} else {
-					success = true
-					fmt.Println("Successfully executed existing test command:", existingTestCommand) // Success message
-					break
-				}
-			}
-
-			if !success {
-				fmt.Println("Failed to execute existing test command after retries.")
-				return
-			}
-
-			return
-		}
-
-		// Generate and execute a new test command
-		var refactoredTestCommand string
-		success := false
-		for i := 0; i < defaultRetryCount; i++ {
-			testCommand, err := generateTestCommand(directory)
-			if err != nil {
-				fmt.Println("Error generating test command:", err)
-				time.Sleep(retryDelay)
-				continue
-			}
-
-			refactoredTestCommand = filterOutCodeBlocks(testCommand)
-			fmt.Println("Successfully generated test command:", refactoredTestCommand)
-
-			if err := executeCommand(directory, refactoredTestCommand); err != nil {
-				// Handle missing dependency error
-				dependencyCommand, depErr := generateDependencyCommand(refactoredTestCommand, err.Error())
-				if depErr != nil {
-					fmt.Println("Error generating dependency command:", depErr)
-					return
-				}
-
-				fmt.Println("Running dependency installation command:", dependencyCommand)
-				if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
-					fmt.Println("Error executing dependency command:", depErr)
-					time.Sleep(retryDelay)
-				} else {
-					// Retry executing test command
-					if err := executeCommand(directory, refactoredTestCommand); err != nil {
-						fmt.Println("Error executing test command:", err)
-						time.Sleep(retryDelay)
-					} else {
-						success = true
-						fmt.Println("Successfully executed test command after dependency installation:", refactoredTestCommand)
-						break
-					}
-				}
-			} else {
-				success = true
-				fmt.Println("Successfully executed test command:", refactoredTestCommand)
-				break
-			}
-		}
-
-		if !success {
-			fmt.Println("Failed to generate or execute test command after retries.")
-			return
-		}
-
-		// Update the .ephemyral file with the successful test command
-		if err := updateEphemyralFile(directory, "test", refactoredTestCommand); err != nil {
-			fmt.Println("Error updating .ephemyral file:", err)
-			return
-		}
-
-		fmt.Println("Successfully updated .ephemyral with test command:", refactoredTestCommand) // Success message
 	},
 }
 

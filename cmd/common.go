@@ -196,3 +196,101 @@ func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }
+
+// Function type for generating commands.
+type commandGenerator func(directory string) (string, error)
+
+// Map associating command types with their respective generation functions.
+var commandGenerators = map[string]commandGenerator{
+	"test": generateTestCommand,
+	"lint": generateLintCommand,
+	"build": generateBuildCommand,
+	"docs": generateDocsCommand,
+}
+
+// Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
+func executeCommandOfType(directory, commandType string, retryCount int, retryDelay time.Duration) error {
+	// Try to get an existing command of the given type.
+	existingCommand, err := getExistingCommand(directory, commandType)
+	if err != nil {
+		return fmt.Errorf("error reading existing %s command: %v", commandType, err)
+	}
+
+	if existingCommand != "" {
+		// Retry execution with the existing command.
+		if err := retryExecution(directory, existingCommand, commandType, retryCount, retryDelay); err != nil {
+			return fmt.Errorf("failed to execute %s command after retries: %v", commandType, err)
+		}
+		return nil
+	}
+
+	// Generate and execute a new command.
+	return generateAndExecuteCommand(directory, commandType, retryCount, retryDelay)
+}
+
+// Retries execution of a given command a specified number of times.
+func retryExecution(directory, command, commandType string, retryCount int, retryDelay time.Duration) error {
+	for i := 0; i < retryCount; i++ {
+		fmt.Printf("Running %s command: %s\n", commandType, command)
+		if err := executeCommand(directory, command); err != nil {
+			fmt.Println("Error executing command:", err)
+			time.Sleep(retryDelay)
+		} else {
+			fmt.Printf("Successfully executed %s command: %s\n", commandType, command)
+			return nil
+		}
+	}
+	return fmt.Errorf("failed to execute %s command after retries", commandType)
+}
+
+// Generates and executes a new command of a given type.
+func generateAndExecuteCommand(directory, commandType string, retryCount int, retryDelay time.Duration) error {
+	var refactoredCommand string
+
+	for i := 0; i < retryCount; i++ {
+		// Generate a new command using the appropriate generator function.
+		generator, found := commandGenerators[commandType]
+		if !found {
+			return fmt.Errorf("generator function not found for command type: %s", commandType)
+		}
+
+		command, err := generator(directory)
+		if err != nil {
+			fmt.Println("Error generating command:", err)
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		refactoredCommand = filterOutCodeBlocks(command)
+		fmt.Printf("Successfully generated %s command: %s\n", commandType, refactoredCommand)
+
+		// Attempt to execute the command.
+		if err := executeCommand(directory, refactoredCommand); err != nil {
+			// Handle missing dependency error.
+			dependencyCommand, depErr := generateDependencyCommand(refactoredCommand, err.Error())
+			if depErr != nil {
+				return fmt.Errorf("error generating dependency command: %v", depErr)
+			}
+
+			fmt.Printf("Running dependency installation command: %s\n", dependencyCommand)
+			if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
+				fmt.Println("Error executing dependency command:", depErr)
+				time.Sleep(retryDelay)
+			} else {
+				// Retry executing the original command.
+				if err := executeCommand(directory, refactoredCommand); err != nil {
+					fmt.Println("Error executing command:", err)
+					time.Sleep(retryDelay)
+				} else {
+					fmt.Printf("Successfully executed %s command after dependency installation: %s\n", commandType, refactoredCommand)
+					return nil
+				}
+			}
+		} else {
+			fmt.Printf("Successfully executed %s command: %s\n", commandType, refactoredCommand)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("failed to execute %s command after retries", commandType)
+}
