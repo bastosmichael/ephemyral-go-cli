@@ -1,3 +1,5 @@
+// command_test.go
+
 package cmd
 
 import (
