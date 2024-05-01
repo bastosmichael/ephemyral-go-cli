@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"strings"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	cfgFile  string
+	cfgFile string
 	rootCmd = &cobra.Command{
 		Use:   "ephemyral",
 		Short: "Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.",
@@ -57,7 +58,7 @@ func readConfig() {
 }
 
 func GenerateAndMergeDocs() {
-	// Generate individual markdown files for each command
+	// Generate individual markdown files
 	err := doc.GenMarkdownTree(rootCmd, "./docs")
 	if err != nil {
 		log.Fatal(err)
@@ -70,19 +71,43 @@ func GenerateAndMergeDocs() {
 	for _, file := range files {
 		if !file.IsDir() {
 			content, err := ioutil.ReadFile("./docs/" + file.Name())
-			if err != nil {
-				log.Fatal(err)
+			if err == nil {
+				fileContent := string(content)
+
+				// Replace links pointing to .md files with links pointing to the docs directory
+				fileContent = rewriteMdLinks(fileContent)
+
+				documentation.WriteString(fileContent + "\n")
 			}
-			documentation.WriteString(string(content) + "\n")
 		}
 	}
 
-	// Combine the static content with the generated documentation
-	newReadme := documentation.String()
-
 	// Write the new README to the file system, replacing the existing one
-	err = ioutil.WriteFile("docs/README.md", []byte(newReadme), 0644)
+	err = ioutil.WriteFile("README.md", []byte(documentation.String()), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func rewriteMdLinks(content string) string {
+	// Regex to match Markdown-style links
+	linkRegex := regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+
+	return linkRegex.ReplaceAllStringFunc(content, func(match string) string {
+		parts := linkRegex.FindStringSubmatch(match)
+
+		// If parts exist, rewrite the link to point to the docs directory
+		if len(parts) >= 3 {
+			text, link := parts[1], parts[2]
+
+			// Rewrite internal links pointing to .md files
+			if strings.HasSuffix(link, ".md") {
+				link = "./docs/" + link
+			}
+
+			return "[" + text + "](" + link + ")"
+		}
+
+		return match
+	})
 }
