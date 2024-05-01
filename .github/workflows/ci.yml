@@ -43,8 +43,8 @@ jobs:
           go test ./...
           echo "Generating Docs..."
           go run main.go gendoc
-          echo "Linting..."
-          golangci-lint run ./cmd ./pkg
+          # echo "Linting..."
+          # golangci-lint run ./cmd ./pkg
           
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'

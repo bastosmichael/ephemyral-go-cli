@@ -67,6 +67,15 @@ jobs:
       - name: Build
         run: go build -o ephemyral-${{ runner.os }}-${{ matrix.arch }}
 
+      - name: Run Ephemyral Commands
+        run: |
+          echo "Testing..."
+          go test ./...
+          echo "Generating Docs..."
+          go run main.go gendoc
+          # echo "Linting..."
+          # golangci-lint run ./cmd ./pkg
+
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
         with:
