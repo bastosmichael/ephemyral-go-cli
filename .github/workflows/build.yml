@@ -67,14 +67,18 @@ jobs:
       - name: Build
         run: go build -o ephemyral-${{ runner.os }}-${{ matrix.arch }}
 
-      - name: Run Ephemyral Commands
-        run: |
-          echo "Testing..."
-          go test ./...
-          echo "Generating Docs..."
-          go run main.go gendoc
-          # echo "Linting..."
-          # golangci-lint run ./cmd ./pkg
+      - name: Generate Documentation
+        run: go run main.go gendoc
+
+      - name: Zip Documentation and README
+        run: zip -r documentation-${{ runner.os }}-${{ matrix.arch }}.zip README.md docs/
+        shell: bash
+
+      - name: Upload Documentation and README Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-${{ runner.os }}-${{ matrix.arch }}
+          path: documentation-${{ runner.os }}-${{ matrix.arch }}.zip
 
       - name: Create Release Artifact
         uses: actions/upload-artifact@v3
@@ -168,6 +172,54 @@ jobs:
           name: ephemyral-Windows-386
           path: windows
 
+      - name: Download Documentation Artifact (macOS - amd64)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-macOS-amd64
+          path: macos
+
+      - name: Download Documentation Artifact (macOS - arm64)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-macOS-arm64
+          path: macos
+
+      - name: Download Documentation Artifact (macOS - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-macOS-386
+          path: macos
+
+      - name: Download Documentation Artifact (Linux - amd64)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-Linux-amd64
+          path: ubuntu
+
+      - name: Download Documentation Artifact (Linux - arm64)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-Linux-arm64
+          path: ubuntu
+
+      - name: Download Documentation Artifact (Linux - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-Linux-386
+          path: ubuntu
+
+      - name: Download Documentation Artifact (Windows - amd64)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-Windows-amd64
+          path: windows
+
+      - name: Download Documentation Artifact (Windows - 386)
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-Windows-386
+          path: windows
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -259,3 +311,83 @@ jobs:
           asset_path: windows/ephemyral-Windows-386
           asset_name: ephemyral-Windows-386
           asset_content_type: application/octet-stream
+
+      - name: Upload Documentation Asset (macOS - amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: macos/documentation-macOS-amd64.zip
+          asset_name: documentation-macOS-amd64
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (macOS - arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: macos/documentation-macOS-arm64.zip
+          asset_name: documentation-macOS-arm64
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (macOS - 386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: macos/documentation-macOS-386.zip
+          asset_name: documentation-macOS-386
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (Linux - amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/documentation-Linux-amd64.zip
+          asset_name: documentation-Linux-amd64
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (Linux - arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/documentation-Linux-arm64.zip
+          asset_name: documentation-Linux-arm64
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (Linux - 386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu/documentation-Linux-386.zip
+          asset_name: documentation-Linux-386
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (Windows - amd64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: windows/documentation-Windows-amd64.zip
+          asset_name: documentation-Windows-amd64
+          asset_content_type: application/zip
+
+      - name: Upload Documentation Asset (Windows - 386)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: windows/documentation-Windows-386.zip
+          asset_name: documentation-Windows-386
+          asset_content_type: application/zip
