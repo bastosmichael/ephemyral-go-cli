@@ -40,13 +40,13 @@ jobs:
       - name: Run Ephemyral Commands
         run: |
           echo "Building..."
-          ./ephemyral build .
+          ./ephemyral build ../ephemyral-go/
           echo "Linting..."
-          ./ephemyral lint .
+          ./ephemyral lint ../ephemyral-go/
           echo "Testing..."
-          ./ephemyral test .
+          ./ephemyral test ../ephemyral-go/
           echo "Generating Docs..."
-          ./ephemyral docs .
+          ./ephemyral docs ../ephemyral-go/
 
   dependabot-auto-merge:
     name: 'Dependabot Auto Merge'
