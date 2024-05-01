@@ -16,10 +16,10 @@ import (
 
 // EphemyralFile represents the structure of the .ephemyral YAML file.
 type EphemyralFile struct {
-	BuildCommand   string `yaml:"build_command"`
-	TestCommand    string `yaml:"test_command"`
-	LintCommand    string `yaml:"lint_command"`
-	DocsCommand    string `yaml:"docs_command"`
+	BuildCommand string `yaml:"build_command"`
+	TestCommand  string `yaml:"test_command"`
+	LintCommand  string `yaml:"lint_command"`
+	DocsCommand  string `yaml:"docs_command"`
 }
 
 var retryDelay = 2 * time.Second

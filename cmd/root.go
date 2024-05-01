@@ -1,13 +1,13 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
 	"strings"
-	"bufio"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
