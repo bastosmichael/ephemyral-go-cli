@@ -325,7 +325,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: macos/documentation-macOS-amd64.zip
-          asset_name: documentation-macOS-amd64
+          asset_name: documentation-macOS-amd64.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (macOS - arm64)
@@ -335,7 +335,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: macos/documentation-macOS-arm64.zip
-          asset_name: documentation-macOS-arm64
+          asset_name: documentation-macOS-arm64.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (macOS - 386)
@@ -345,7 +345,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: macos/documentation-macOS-386.zip
-          asset_name: documentation-macOS-386
+          asset_name: documentation-macOS-386.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (Linux - amd64)
@@ -355,7 +355,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu/documentation-Linux-amd64.zip
-          asset_name: documentation-Linux-amd64
+          asset_name: documentation-Linux-amd64.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (Linux - arm64)
@@ -365,7 +365,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu/documentation-Linux-arm64.zip
-          asset_name: documentation-Linux-arm64
+          asset_name: documentation-Linux-arm64.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (Linux - 386)
@@ -375,7 +375,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu/documentation-Linux-386.zip
-          asset_name: documentation-Linux-386
+          asset_name: documentation-Linux-386.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (Windows - amd64)
@@ -385,7 +385,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: windows/documentation-Windows-amd64.zip
-          asset_name: documentation-Windows-amd64
+          asset_name: documentation-Windows-amd64.zip
           asset_content_type: application/zip
 
       - name: Upload Documentation Asset (Windows - 386)
@@ -395,5 +395,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: windows/documentation-Windows-386.zip
-          asset_name: documentation-Windows-386
+          asset_name: documentation-Windows-386.zip
           asset_content_type: application/zip
