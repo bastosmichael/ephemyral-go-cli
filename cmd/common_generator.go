@@ -7,13 +7,14 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"github.com/google/uuid"
 	gpt4client "ephemyral/pkg"
 )
 
 var retryDelay = 2 * time.Second
 
 // Function type for generating commands.
-type commandGenerator func(directory string) (string, error)
+type commandGenerator func(directory string, convID uuid.UUID) (string, error)
 
 // Map associating command types with their respective generation functions.
 var commandGenerators = map[string]commandGenerator{
@@ -23,26 +24,8 @@ var commandGenerators = map[string]commandGenerator{
 	"docs":  generateDocsCommand,
 }
 
-func generateDependencyCommand(failedCommand, errorMessage string) (string, error) {
-	// Determine the operating system
-	osType := runtime.GOOS
-
-	// Construct a prompt to handle missing dependencies
-	prompt := fmt.Sprintf("The following command '%s' failed with the error '%s'. Based on this error and the current operating system '%s', provide the simplest single-line command to install all necessary dependencies. The response should contain no comments, explanations, or code blocks, and if multiple commands are needed, they should be separated by '&&'. Include necessary flags like '-y' for automatic confirmation:\n", failedCommand, errorMessage, osType)
-	dependencyCommand, err := gpt4client.GetGPT4ResponseWithPrompt(prompt)
-	if err != nil {
-		return "", err
-	}
-
-	if strings.TrimSpace(dependencyCommand) == "" {
-		return "", fmt.Errorf("received empty dependency command")
-	}
-
-	return dependencyCommand, nil
-}
-
 // Generates and executes a new command of a given type.
-func generateAndExecuteCommand(directory, commandType string, retryCount int, retryDelay time.Duration) error {
+func generateAndExecuteCommand(directory, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	var refactoredCommand string
 
 	generationFailed := false
@@ -55,7 +38,7 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 			return fmt.Errorf("generator function not found for command type: %s", commandType)
 		}
 
-		command, err := generator(directory)
+		command, err := generator(directory, convID)
 		if err != nil {
 			fmt.Println("Error generating command:", err)
 			generationFailed = true
@@ -69,7 +52,7 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 		// Attempt to execute the command.
 		if err := executeCommand(directory, refactoredCommand); err != nil {
 			// Handle missing dependency error.
-			dependencyCommand, depErr := generateDependencyCommand(refactoredCommand, err.Error())
+			dependencyCommand, depErr := generateDependencyCommand(refactoredCommand, err.Error(), convID)
 			if depErr != nil {
 				return fmt.Errorf("error generating dependency command: %v", depErr)
 			}
@@ -86,7 +69,7 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 					time.Sleep(retryDelay)
 				} else {
 					fmt.Printf("Successfully executed %s command after dependency installation: %s\n", commandType, refactoredCommand)
-					// Update the .ephemyral file with the successful command
+					// Update the .ephemyral file with the successful command.
 					if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
 						fmt.Println("Error updating .ephemyral file:", err)
 						return err
@@ -96,7 +79,7 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 			}
 		} else {
 			fmt.Printf("Successfully executed %s command: %s\n", commandType, refactoredCommand)
-			// Update the .ephemyral file with the successful command
+			// Update the .ephemyral file with the successful command.
 			if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
 				fmt.Println("Error updating .ephemyral file:", err)
 				return err
@@ -110,4 +93,22 @@ func generateAndExecuteCommand(directory, commandType string, retryCount int, re
 	}
 
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
+}
+
+func generateDependencyCommand(failedCommand, errorMessage string, convID uuid.UUID) (string, error) {
+	// Determine the operating system
+	osType := runtime.GOOS
+
+	// Construct a prompt to handle missing dependencies
+	prompt := fmt.Sprintf("The following command '%s' failed with the error '%s'. Based on this error and the current operating system '%s', provide the simplest single-line command to install all necessary dependencies. The response should contain no comments, explanations, or code blocks, and if multiple commands are needed, they should be separated by '&&'. Include necessary flags like '-y' for automatic confirmation:\n", failedCommand, errorMessage, osType)
+	dependencyCommand, err := gpt4client.GetGPT4ResponseWithPrompt(prompt, convID)
+	if err != nil {
+		return "", err
+	}
+
+	if strings.TrimSpace(dependencyCommand) == "" {
+		return "", fmt.Errorf("received empty dependency command")
+	}
+
+	return dependencyCommand, nil
 }

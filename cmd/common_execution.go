@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // executeBuildCommand executes the build command using os/exec.
@@ -29,28 +31,36 @@ func executeCommand(directory, command string) error {
 	return nil
 }
 
-// Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
-func executeCommandOfType(directory, commandType string, retryCount int, retryDelay time.Duration) error {
-	// Try to get an existing command of the given type.
+func getExistingCommandOrError(directory, commandType string) (string, error) {
 	existingCommand, err := getExistingCommand(directory, commandType)
 	if err != nil {
-		return fmt.Errorf("error reading existing %s command: %v", commandType, err)
+		return "", fmt.Errorf("error reading existing %s command: %v", commandType, err)
+	}
+	return existingCommand, nil
+}
+
+// Executes a command of a given type (e.g., test, lint, build, docs) in the specified directory.
+func executeCommandOfType(directory, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
+	// Try to get an existing command of the given type.
+	existingCommand, err := getExistingCommandOrError(directory, commandType)
+	if err != nil {
+		return err
 	}
 
 	if existingCommand != "" {
 		// Retry execution with the existing command.
-		if err := retryExecution(directory, existingCommand, commandType, retryCount, retryDelay); err != nil {
+		if err := retryExecution(directory, existingCommand, commandType, convID, retryCount, retryDelay); err != nil {
 			return fmt.Errorf("failed to execute %s command after retries: %v", commandType, err)
 		}
 		return nil
 	}
 
 	// Generate and execute a new command.
-	return generateAndExecuteCommand(directory, commandType, retryCount, retryDelay)
+	return generateAndExecuteCommand(directory, commandType, convID, retryCount, retryDelay)
 }
 
 // Retries execution of a given command a specified number of times.
-func retryExecution(directory, command, commandType string, retryCount int, retryDelay time.Duration) error {
+func retryExecution(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	generationFailed := false
 	executionFailed := false
 

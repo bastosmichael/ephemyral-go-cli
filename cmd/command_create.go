@@ -1,3 +1,4 @@
+//go:build !lint
 // +build !lint
 
 package cmd
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +22,9 @@ If the file path is a directory, it uses a query to determine the file names and
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := args[0]
+
+		convID := uuid.New()
+		fmt.Println(convID)
 
 		var userPrompt string
 		if len(args) > 1 && strings.TrimSpace(args[1]) != "" {
@@ -42,16 +47,16 @@ If the file path is a directory, it uses a query to determine the file names and
 				return
 			}
 			for _, name := range filesList {
-				generateNewFile(filepath.Join(filePath, name), userPrompt)
+				generateNewFile(filepath.Join(filePath, name), userPrompt, convID)
 			}
 		} else {
 			// Generate single file
-			generateNewFile(filePath, userPrompt)
+			generateNewFile(filePath, userPrompt, convID)
 		}
 	},
 }
 
-func generateNewFile(filePath, userPrompt string) {
+func generateNewFile(filePath string, userPrompt string, convID uuid.UUID) {
 	if _, err := os.Stat(filePath); err == nil {
 		fmt.Println("File already exists:", filePath)
 		return
@@ -59,7 +64,7 @@ func generateNewFile(filePath, userPrompt string) {
 
 	fullPrompt := fmt.Sprintf("Create a new code file based on this prompt: %s.", userPrompt)
 
-	newFileContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+	newFileContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil {
 		fmt.Println("Error generating new file content:", err)
 		return

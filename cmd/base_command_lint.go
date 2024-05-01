@@ -8,10 +8,11 @@ import (
 
 	gpt4client "ephemyral/pkg"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-func generateLintCommand(directory string) (string, error) {
+func generateLintCommand(directory string, convID uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
@@ -19,7 +20,7 @@ func generateLintCommand(directory string) (string, error) {
 
 	fullPrompt := LintCommandPrompt + strings.Join(filesList, "\n")
 	gpt4client.SetDebug(false)
-	lintCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+	lintCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +47,10 @@ var lintCmd = &cobra.Command{
 			return
 		}
 
-		if err := executeCommandOfType(directory, "lint", defaultRetryCount, retryDelay); err != nil {
+		convID := uuid.New()
+		fmt.Println(convID)
+
+		if err := executeCommandOfType(directory, "lint", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)
 			return
 		}

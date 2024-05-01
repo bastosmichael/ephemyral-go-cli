@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-func generateBuildCommand(directory string) (string, error) {
+// Generates a build command.
+func generateBuildCommand(directory string, convID uuid.UUID) (string, error) {
 	filesList, err := getFileList(directory)
 	if err != nil {
 		return "", err
@@ -18,7 +20,7 @@ func generateBuildCommand(directory string) (string, error) {
 
 	fullPrompt := BuildCommandPrompt + strings.Join(filesList, "\n")
 	gpt4client.SetDebug(false)
-	buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt)
+	buildCommand, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
 	if err != nil || strings.TrimSpace(buildCommand) == "" {
 		return "", fmt.Errorf("error generating or empty build command")
 	}
@@ -41,7 +43,10 @@ var buildCmd = &cobra.Command{
 			return
 		}
 
-		if err := executeCommandOfType(directory, "build", defaultRetryCount, retryDelay); err != nil {
+		convID := uuid.New()
+		fmt.Println(convID)
+
+		if err := executeCommandOfType(directory, "build", convID, defaultRetryCount, retryDelay); err != nil {
 			fmt.Println(err)
 			return
 		}
