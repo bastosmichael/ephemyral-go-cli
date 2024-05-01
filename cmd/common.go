@@ -33,7 +33,6 @@ func generateDependencyCommand(failedCommand, errorMessage string) (string, erro
 
 	// Construct a prompt to handle missing dependencies
 	prompt := fmt.Sprintf("The following command '%s' failed with the error '%s'. Based on this error and the current operating system '%s', provide the simplest single-line command to install all necessary dependencies. The response should contain no comments, explanations, or code blocks, and if multiple commands are needed, they should be separated by '&&'. Include necessary flags like '-y' for automatic confirmation:\n", failedCommand, errorMessage, osType)
-
 	dependencyCommand, err := gpt4client.GetGPT4ResponseWithPrompt(prompt)
 	if err != nil {
 		return "", err
