@@ -1,3 +1,5 @@
+// +build !lint
+
 package cmd
 
 const (

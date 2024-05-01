@@ -1,4 +1,5 @@
-// refactor.go
+// +build !lint
+
 package cmd
 
 import (

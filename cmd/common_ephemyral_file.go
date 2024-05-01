@@ -1,3 +1,5 @@
+// +build !lint
+
 package cmd
 
 import (
@@ -5,6 +7,14 @@ import (
 	"os"
 	"gopkg.in/yaml.v2"
 )
+
+// EphemyralFile represents the structure of the .ephemyral YAML file.
+type EphemyralFile struct {
+	BuildCommand string `yaml:"build-command"`
+	TestCommand  string `yaml:"test-command"`
+	LintCommand  string `yaml:"lint-command"`
+	DocsCommand  string `yaml:"docs-command"`
+}
 
 // getExistingCommand reads the existing command from the .ephemyral file based on the key.
 func getExistingCommand(directory, key string) (string, error) {

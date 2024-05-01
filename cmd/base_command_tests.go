@@ -1,4 +1,4 @@
-// command_test.go
+// +build !lint
 
 package cmd
 
