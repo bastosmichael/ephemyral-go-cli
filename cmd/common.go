@@ -9,12 +9,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 // EphemyralFile represents the structure of the .ephemyral YAML file.
@@ -45,51 +42,7 @@ func generateDependencyCommand(failedCommand, errorMessage string) (string, erro
 	return dependencyCommand, nil
 }
 
-// getFileList retrieves a list of all non-directory file names in the specified directory and its subdirectories,
-// skipping specified directories like ".git".
-func getFileList(directory string) ([]string, error) {
-	var filesList []string
 
-	// Read the files in the root directory.
-	rootFiles, err := os.ReadDir(directory)
-	if err != nil {
-		return nil, err
-	}
-
-	// Add non-directory files from the root directory to the list.
-	for _, file := range rootFiles {
-		if !file.IsDir() {
-			filesList = append(filesList, file.Name())
-		}
-	}
-
-	// Walk through the directory and its subdirectories.
-	err = filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			if strings.HasSuffix(info.Name(), ".git") {
-				return filepath.SkipDir
-			}
-		} else {
-			relativePath, err := filepath.Rel(directory, path)
-			if err != nil {
-				return err
-			}
-			filesList = append(filesList, relativePath)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return filesList, nil
-}
 
 // executeBuildCommand executes the build command using os/exec.
 func executeCommand(directory, command string) error {
@@ -109,100 +62,6 @@ func executeCommand(directory, command string) error {
 	}
 
 	return nil
-}
-
-// getExistingCommand reads the existing command from the .ephemyral file based on the key.
-func getExistingCommand(directory, key string) (string, error) {
-	filename := directory + "/.ephemyral"
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return "", nil
-	}
-
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-
-	var ephemyral EphemyralFile
-	if err := yaml.Unmarshal(data, &ephemyral); err != nil {
-		return "", err
-	}
-
-	if key == "build" {
-		return ephemyral.BuildCommand, nil
-	} else if key == "test" {
-		return ephemyral.TestCommand, nil
-	} else if key == "lint" {
-		return ephemyral.LintCommand, nil
-	} else if key == "docs" {
-		return ephemyral.DocsCommand, nil
-	}
-
-	return "", nil
-}
-
-// updateEphemyralFile updates the specified key in the .ephemyral file.
-func updateEphemyralFile(directory, key, command string) error {
-	filename := directory + "/.ephemyral"
-
-	var ephemyral EphemyralFile
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
-		data, err := os.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-
-		if err := yaml.Unmarshal(data, &ephemyral); err != nil {
-			return err
-		}
-	}
-
-	switch key {
-	case "build":
-		ephemyral.BuildCommand = command
-	case "test":
-		ephemyral.TestCommand = command
-	case "lint":
-		ephemyral.LintCommand = command
-	case "docs":
-		ephemyral.DocsCommand = command
-	default:
-		return fmt.Errorf("unknown key: %s", key)
-	}
-
-	data, err := yaml.Marshal(&ephemyral)
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(filename, data, 0644); err != nil {
-		fmt.Println("Error updating .ephemyral file:", err)
-		return err
-	}
-
-	fmt.Printf("Successfully updated .ephemyral with %s command: %s\n", key, command)
-	return nil
-}
-
-func filterOutCodeBlocks(content string) string {
-	lines := strings.Split(content, "\n")
-	filteredLines := make([]string, 0)
-	for _, line := range lines {
-		if !strings.Contains(line, "```") {
-			filteredLines = append(filteredLines, line)
-		}
-	}
-	// Join the filtered lines and ensure it ends with a newline
-	result := strings.Join(filteredLines, "\n")
-	if !strings.HasSuffix(result, "\n") {
-		result += "\n" // Add a newline if it doesn't exist
-	}
-	return result
-}
-
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
 }
 
 // Function type for generating commands.
