@@ -1,11 +1,11 @@
 
 ## ephemyral
 
-Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 ### Synopsis
 
-Ephemyral is an AI-powered CLI application designed to streamline and optimize various tasks associated with machine learning projects. By leveraging machine learning models, Ephemyral provides a set of robust commands that simplify building, testing, and managing ML workflows. This tool is tailored for software engineers, data scientists, and anyone managing AI-driven projects.
+Ephemyral is an AI-powered CLI application designed to streamline and optimize various software development tasks with the help of machine learning. By leveraging large language models, Ephemyral provides a set of robust commands that simplify building, testing, and managing development workflows. This tool is tailored for software engineers, data scientists, and anyone managing software projects.
 
 ### Options
 
@@ -16,18 +16,18 @@ Ephemyral is an AI-powered CLI application designed to streamline and optimize v
 
 ### SEE ALSO
 
-* [ephemyral build](./docs/ephemyral_build.md)	 - Use AI to intelligently generate and execute a build command for the specified directory, optimizing for performance and efficiency.
+* [ephemyral build](./docs/ephemyral_build.md)	 - Use AI to intelligently generate and execute a build commands for the specified directory, optimizing for performance and efficiency.
 * [ephemyral create](./docs/ephemyral_create.md)	 - Employ a language model to generate new code files based on a natural language prompt. If the file path is a directory, it generates multiple AI-crafted files.
-* [ephemyral docs](./docs/ephemyral_docs.md)	 - Generate and execute a command to generate documentation, enhancing the codebase's maintainability.
+* [ephemyral docs](./docs/ephemyral_docs.md)	 - Generate and execute commands to create documentation, enhancing your codebase's maintainability.
 * [ephemyral init](./docs/ephemyral_init.md)	 - Initialize a new .ephemyral file for AI-generated configurations, setting up the environment in a directory.
-* [ephemyral lint](./docs/ephemyral_lint.md)	 - Use a machine learning model to generate and execute a linting command, improving code quality by identifying patterns and anomalies.
-* [ephemyral refactor](./docs/ephemyral_refactor.md)	 - Utilize an advanced LLM to refactor given files or all files in a directory based on a prompt, outputting the improved code to a new location.
-* [ephemyral test](./docs/ephemyral_test.md)	 - Deploy AI models to generate and run optimized test commands for the specified directory, enhancing test accuracy and efficiency.
+* [ephemyral lint](./docs/ephemyral_lint.md)	 - Use machine learning models to generate and execute a lint commands, improving code quality by identifying patterns and anomalies.
+* [ephemyral refactor](./docs/ephemyral_refactor.md)	 - Utilize an advanced LLM to refactor a give file or all files in a provided directory based on prompts, outputting, building and testing the improved code.
+* [ephemyral test](./docs/ephemyral_test.md)	 - Deploy AI models to generate and run optimized test commands for the specified directories, enhancing test accuracy and efficiency.
 
 
 ## ephemyral build
 
-Use AI to intelligently generate and execute a build command for the specified directory, optimizing for performance and efficiency.
+Use AI to intelligently generate and execute a build commands for the specified directory, optimizing for performance and efficiency.
 
 ### Synopsis
 
@@ -52,7 +52,7 @@ ephemyral build [directory] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral create
@@ -82,12 +82,12 @@ ephemyral create [file path] [prompt] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral docs
 
-Generate and execute a command to generate documentation, enhancing the codebase's maintainability.
+Generate and execute commands to create documentation, enhancing your codebase's maintainability.
 
 ### Synopsis
 
@@ -112,7 +112,7 @@ ephemyral docs [directory] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral init
@@ -144,12 +144,12 @@ ephemyral init [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral lint
 
-Use a machine learning model to generate and execute a linting command, improving code quality by identifying patterns and anomalies.
+Use machine learning models to generate and execute a lint commands, improving code quality by identifying patterns and anomalies.
 
 ### Synopsis
 
@@ -174,12 +174,12 @@ ephemyral lint [directory] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral refactor
 
-Utilize an advanced LLM to refactor given files or all files in a directory based on a prompt, outputting the improved code to a new location.
+Utilize an advanced LLM to refactor a give file or all files in a provided directory based on prompts, outputting, building and testing the improved code.
 
 ### Synopsis
 
@@ -193,7 +193,8 @@ ephemyral refactor [file path] [prompt] [new file path] [flags]
 ### Options
 
 ```
-  -h, --help   help for refactor
+  -h, --help        help for refactor
+      --retry int   Number of retries for refactoring files (default 3)
 ```
 
 ### Options inherited from parent commands
@@ -204,12 +205,12 @@ ephemyral refactor [file path] [prompt] [new file path] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
 ## ephemyral test
 
-Deploy AI models to generate and run optimized test commands for the specified directory, enhancing test accuracy and efficiency.
+Deploy AI models to generate and run optimized test commands for the specified directories, enhancing test accuracy and efficiency.
 
 ### Synopsis
 
@@ -234,6 +235,6 @@ ephemyral test [directory] [flags]
 
 ### SEE ALSO
 
-* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing tasks that leverage machine learning models.
+* [ephemyral](./docs/ephemyral.md)	 - Ephemyral is an AI-powered CLI application for managing coding tasks that leverage machine learning models.
 
 
