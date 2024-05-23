@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) {
+func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration, runBuild, runLint, runTest, runDocs bool) {
 	// Reading the original file content
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
@@ -33,19 +33,33 @@ func executeRefactorWithRetries(filePath, userPrompt, newFilePath string, convID
 
 		success := refactorFile(filePath, string(fileContent), userPrompt, newFilePath, convID)
 		if success {
-			// If refactor succeeds, run the existing build command
-			runExistingBuildCommand(filePath, convID, retryCount, retryDelay)
+			// Run the additional commands if specified
+			if runBuild && !runExistingBuildCommand(filePath, convID, retryCount, retryDelay) {
+				restoreOriginalContent(filePath, fileContent)
+				continue
+			}
+
+			if runLint && !runExistingLintCommand(filePath, convID, retryCount, retryDelay) {
+				restoreOriginalContent(filePath, fileContent)
+				continue
+			}
+
+			if runTest && !runExistingTestCommand(filePath, convID, retryCount, retryDelay) {
+				restoreOriginalContent(filePath, fileContent)
+				continue
+			}
+
+			if runDocs && !runExistingDocsCommand(filePath, convID, retryCount, retryDelay) {
+				restoreOriginalContent(filePath, fileContent)
+				continue
+			}
+
 			return
 		}
 	}
 
 	// If all retries fail, restore the original content
-	err = os.WriteFile(filePath, fileContent, 0644)
-	if err != nil {
-		fmt.Println("Error restoring the original file content:", err)
-	} else {
-		fmt.Println("All retries failed, original content restored.")
-	}
+	restoreOriginalContent(filePath, fileContent)
 }
 
 func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID uuid.UUID) bool {
@@ -88,29 +102,113 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID 
 	return true
 }
 
-func runExistingBuildCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) {
-	// Find directory containing ".ephemyral"
+func restoreOriginalContent(filePath string, fileContent []byte) {
+	err := os.WriteFile(filePath, fileContent, 0644)
+	if err != nil {
+		fmt.Println("Error restoring the original file content:", err)
+	} else {
+		fmt.Println("All retries failed, original content restored.")
+	}
+}
+
+func runExistingBuildCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) bool {
 	directory, err := findEphemyralDirectory(filePath)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return false
 	}
 
-	// Retrieve existing build command
 	existingCommand, err := getExistingCommandOrError(directory, "build")
 	if err != nil {
 		fmt.Println("Error reading existing build command:", err)
-		return
+		return false
 	}
 
 	if existingCommand != "" {
 		if err := retryExecution(directory, existingCommand, "build", convID, retryCount, retryDelay); err != nil {
 			fmt.Println("Failed to execute build command:", err)
+			return false
 		} else {
 			fmt.Println("Build command executed successfully.")
-			return
+			return true
 		}
 	}
+	return true
+}
+
+func runExistingLintCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) bool {
+	directory, err := findEphemyralDirectory(filePath)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+
+	existingCommand, err := getExistingCommandOrError(directory, "lint")
+	if err != nil {
+		fmt.Println("Error reading existing lint command:", err)
+		return false
+	}
+
+	if existingCommand != "" {
+		if err := retryExecution(directory, existingCommand, "lint", convID, retryCount, retryDelay); err != nil {
+			fmt.Println("Failed to execute lint command:", err)
+			return false
+		} else {
+			fmt.Println("Lint command executed successfully.")
+			return true
+		}
+	}
+	return true
+}
+
+func runExistingTestCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) bool {
+	directory, err := findEphemyralDirectory(filePath)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+
+	existingCommand, err := getExistingCommandOrError(directory, "test")
+	if err != nil {
+		fmt.Println("Error reading existing test command:", err)
+		return false
+	}
+
+	if existingCommand != "" {
+		if err := retryExecution(directory, existingCommand, "test", convID, retryCount, retryDelay); err != nil {
+			fmt.Println("Failed to execute test command:", err)
+			return false
+		} else {
+			fmt.Println("Test command executed successfully.")
+			return true
+		}
+	}
+	return true
+}
+
+func runExistingDocsCommand(filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) bool {
+	directory, err := findEphemyralDirectory(filePath)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+
+	existingCommand, err := getExistingCommandOrError(directory, "docs")
+	if err != nil {
+		fmt.Println("Error reading existing docs command:", err)
+		return false
+	}
+
+	if existingCommand != "" {
+		if err := retryExecution(directory, existingCommand, "docs", convID, retryCount, retryDelay); err != nil {
+			fmt.Println("Failed to execute docs command:", err)
+			return false
+		} else {
+			fmt.Println("Docs command executed successfully.")
+			return true
+		}
+	}
+	return true
 }
 
 var refactorCmd = &cobra.Command{
@@ -143,6 +241,11 @@ and applying the suggested changes, replacing the file content or creating new f
 
 		retryDelay := 2 * time.Second
 
+		runBuild, _ := cmd.Flags().GetBool("build")
+		runLint, _ := cmd.Flags().GetBool("lint")
+		runTest, _ := cmd.Flags().GetBool("test")
+		runDocs, _ := cmd.Flags().GetBool("docs")
+
 		fileInfo, err := os.Stat(filePath)
 		if err != nil {
 			fmt.Println("Error accessing specified path:", err)
@@ -156,7 +259,7 @@ and applying the suggested changes, replacing the file content or creating new f
 					return err
 				}
 				if !info.IsDir() {
-					executeRefactorWithRetries(path, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay)
+					executeRefactorWithRetries(path, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay, runBuild, runLint, runTest, runDocs)
 				}
 				return nil
 			})
@@ -166,12 +269,16 @@ and applying the suggested changes, replacing the file content or creating new f
 				return
 			}
 		} else {
-			executeRefactorWithRetries(filePath, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay)
+			executeRefactorWithRetries(filePath, userPrompt, newFilePath, convID, defaultRetryCount, retryDelay, runBuild, runLint, runTest, runDocs)
 		}
 	},
 }
 
 func init() {
 	refactorCmd.Flags().Int("retry", 3, "Number of retries for refactoring files")
+	refactorCmd.Flags().Bool("build", false, "Run build command after refactoring")
+	refactorCmd.Flags().Bool("lint", false, "Run lint command after refactoring")
+	refactorCmd.Flags().Bool("test", false, "Run test command after refactoring")
+	refactorCmd.Flags().Bool("docs", false, "Run docs command after refactoring")
 	rootCmd.AddCommand(refactorCmd)
 }
