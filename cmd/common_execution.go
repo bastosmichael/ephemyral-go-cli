@@ -81,26 +81,42 @@ func executeCommandOfType(directory, commandType string, convID uuid.UUID, retry
 	return generateAndExecuteCommand(directory, commandType, convID, retryCount, retryDelay)
 }
 
-// Retries execution of a given command a specified number of times.
-func retryExecution(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
-	generationFailed := false
-	executionFailed := false
-
+// Shared function to handle command execution with retries and dependency management
+func executeWithRetries(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
 	for i := 0; i < retryCount; i++ {
 		fmt.Printf("Running %s command: %s\n", commandType, command)
 		if err := executeCommand(directory, command); err != nil {
 			fmt.Println("Error executing command:", err)
-			executionFailed = true
-			time.Sleep(retryDelay)
+
+			// Handle missing dependency error
+			dependencyCommand, depErr := generateDependencyCommand(command, err.Error(), convID)
+			if depErr != nil {
+				return fmt.Errorf("error generating dependency command: %v", depErr)
+			}
+
+			fmt.Printf("Running dependency installation command: %s\n", dependencyCommand)
+			if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
+				fmt.Println("Error executing dependency command:", depErr)
+				time.Sleep(retryDelay)
+			} else {
+				// Retry executing the original command
+				if err := executeCommand(directory, command); err != nil {
+					fmt.Println("Error executing command:", err)
+					time.Sleep(retryDelay)
+				} else {
+					fmt.Printf("Successfully executed %s command after dependency installation: %s\n", commandType, command)
+					return nil
+				}
+			}
 		} else {
 			fmt.Printf("Successfully executed %s command: %s\n", commandType, command)
 			return nil
 		}
 	}
-
-	if generationFailed && executionFailed {
-		return fmt.Errorf("failed to generate or execute %s command after retries", commandType)
-	}
-
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
+}
+
+// Retries execution of a given command a specified number of times
+func retryExecution(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
+	return executeWithRetries(directory, command, commandType, convID, retryCount, retryDelay)
 }

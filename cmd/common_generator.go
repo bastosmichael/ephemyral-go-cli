@@ -1,14 +1,16 @@
+//go:build !lint
 // +build !lint
 
 package cmd
 
 import (
+	gpt4client "ephemyral/pkg"
 	"fmt"
 	"runtime"
 	"strings"
 	"time"
+
 	"github.com/google/uuid"
-	gpt4client "ephemyral/pkg"
 )
 
 var retryDelay = 2 * time.Second
@@ -24,62 +26,31 @@ var commandGenerators = map[string]commandGenerator{
 	"docs":  generateDocsCommand,
 }
 
-// Generates and executes a new command of a given type.
+// Generates and executes a new command of a given type
 func generateAndExecuteCommand(directory, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
-	var refactoredCommand string
-
-	generationFailed := false
-	executionFailed := false
+	generator, found := commandGenerators[commandType]
+	if !found {
+		return fmt.Errorf("generator function not found for command type: %s", commandType)
+	}
 
 	for i := 0; i < retryCount; i++ {
-		// Generate a new command using the appropriate generator function.
-		generator, found := commandGenerators[commandType]
-		if !found {
-			return fmt.Errorf("generator function not found for command type: %s", commandType)
-		}
-
+		// Generate a new command using the appropriate generator function
 		command, err := generator(directory, convID)
 		if err != nil {
 			fmt.Println("Error generating command:", err)
-			generationFailed = true
 			time.Sleep(retryDelay)
 			continue
 		}
 
-		refactoredCommand = filterOutCodeBlocks(command)
+		refactoredCommand := filterOutCodeBlocks(command)
 		fmt.Printf("Successfully generated %s command: %s\n", commandType, refactoredCommand)
 
-		// Attempt to execute the command.
-		if err := executeCommand(directory, refactoredCommand); err != nil {
-			// Handle missing dependency error.
-			dependencyCommand, depErr := generateDependencyCommand(refactoredCommand, err.Error(), convID)
-			if depErr != nil {
-				return fmt.Errorf("error generating dependency command: %v", depErr)
-			}
-
-			fmt.Printf("Running dependency installation command: %s\n", dependencyCommand)
-			if depErr := executeCommand(directory, dependencyCommand); depErr != nil {
-				fmt.Println("Error executing dependency command:", depErr)
-				time.Sleep(retryDelay)
-			} else {
-				// Retry executing the original command.
-				if err := executeCommand(directory, refactoredCommand); err != nil {
-					fmt.Println("Error executing command:", err)
-					executionFailed = true
-					time.Sleep(retryDelay)
-				} else {
-					fmt.Printf("Successfully executed %s command after dependency installation: %s\n", commandType, refactoredCommand)
-					// Update the .ephemyral file with the successful command.
-					if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
-						fmt.Println("Error updating .ephemyral file:", err)
-						return err
-					}
-					return nil
-				}
-			}
+		// Execute the generated command with retries
+		if err := executeWithRetries(directory, refactoredCommand, commandType, convID, retryCount, retryDelay); err != nil {
+			fmt.Println(err)
+			time.Sleep(retryDelay)
 		} else {
-			fmt.Printf("Successfully executed %s command: %s\n", commandType, refactoredCommand)
-			// Update the .ephemyral file with the successful command.
+			// Update the .ephemyral file with the successful command
 			if err := updateEphemyralFile(directory, commandType, refactoredCommand); err != nil {
 				fmt.Println("Error updating .ephemyral file:", err)
 				return err
@@ -87,12 +58,7 @@ func generateAndExecuteCommand(directory, commandType string, convID uuid.UUID, 
 			return nil
 		}
 	}
-
-	if generationFailed && executionFailed {
-		return fmt.Errorf("failed to generate or execute %s command after retries", commandType)
-	}
-
-	return fmt.Errorf("failed to execute %s command after retries", commandType)
+	return fmt.Errorf("failed to generate or execute %s command after retries", commandType)
 }
 
 func generateDependencyCommand(failedCommand, errorMessage string, convID uuid.UUID) (string, error) {
