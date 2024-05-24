@@ -1,3 +1,4 @@
+//go:build !lint
 // +build !lint
 
 package cmd
@@ -10,6 +11,27 @@ import (
 
 	"github.com/google/uuid"
 )
+
+func runCommand(cmdType, filePath string, convID uuid.UUID, retryCount int, retryDelay time.Duration) bool {
+	directory, err := findEphemyralDirectory(filePath)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return false
+	}
+
+	existingCommand, err := getExistingCommandOrError(directory, cmdType)
+	if err != nil || existingCommand == "" {
+		fmt.Println("Error reading existing", cmdType, "command:", err)
+		return false
+	}
+
+	if err := retryExecution(directory, existingCommand, cmdType, convID, retryCount, retryDelay); err != nil {
+		fmt.Println("Failed to execute", cmdType, "command:", err)
+		return false
+	}
+	fmt.Println(cmdType, "command executed successfully.")
+	return true
+}
 
 // executeBuildCommand executes the build command using os/exec.
 func executeCommand(directory, command string) error {
