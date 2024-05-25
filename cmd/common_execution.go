@@ -25,7 +25,7 @@ func runCommand(cmdType, filePath string, convID uuid.UUID, retryCount int, retr
 		return false
 	}
 
-	if err := retryExecution(directory, existingCommand, cmdType, convID, retryCount, retryDelay); err != nil {
+	if err := executeWithRetries(directory, existingCommand, cmdType, convID, retryCount, retryDelay); err != nil {
 		fmt.Println("Failed to execute", cmdType, "command:", err)
 		return false
 	}
@@ -71,7 +71,7 @@ func executeCommandOfType(directory, commandType string, convID uuid.UUID, retry
 
 	if existingCommand != "" {
 		// Retry execution with the existing command.
-		if err := retryExecution(directory, existingCommand, commandType, convID, retryCount, retryDelay); err != nil {
+		if err := executeWithRetries(directory, existingCommand, commandType, convID, retryCount, retryDelay); err != nil {
 			return fmt.Errorf("failed to execute %s command after retries: %v", commandType, err)
 		}
 		return nil
@@ -114,9 +114,4 @@ func executeWithRetries(directory, command, commandType string, convID uuid.UUID
 		}
 	}
 	return fmt.Errorf("failed to execute %s command after retries", commandType)
-}
-
-// Retries execution of a given command a specified number of times
-func retryExecution(directory, command, commandType string, convID uuid.UUID, retryCount int, retryDelay time.Duration) error {
-	return executeWithRetries(directory, command, commandType, convID, retryCount, retryDelay)
 }
