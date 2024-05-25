@@ -26,7 +26,7 @@ func generateTestCommand(directory string, convID uuid.UUID) (string, error) {
 
 var testCmd = &cobra.Command{
 	Use:   "test [directory]",
-	Short: "Deploy AI models to generate and run optimized test commands for the specified directory, enhancing test accuracy and efficiency.",
+	Short: "Deploy AI models to generate and run optimized test commands for the specified directories, enhancing test accuracy and efficiency.",
 	Long:  "The 'test' command generates a testing command based on the structure of the project's files. It then updates the '.ephemyral' configuration file with the new testing command and executes it. Use this command to ensure your project adheres to testing standards and is free from test errors.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

@@ -34,7 +34,7 @@ func generateDocsCommand(directory string, convID uuid.UUID) (string, error) {
 
 var docsCmd = &cobra.Command{
 	Use:   "docs [directory]",
-	Short: "Generate and execute a command to generate documentation, enhancing the codebase's maintainability.",
+	Short: "Generate and execute commands to create documentation, enhancing your codebase's maintainability.",
 	Long:  "The 'docs' command creates a command to produce documentation (like a README or API documentation) for the project's files. It then updates the '.ephemyral' configuration file with the new command and executes it.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

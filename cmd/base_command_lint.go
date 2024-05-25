@@ -34,7 +34,7 @@ func generateLintCommand(directory string, convID uuid.UUID) (string, error) {
 
 var lintCmd = &cobra.Command{
 	Use:   "lint [directory]",
-	Short: "Use a machine learning model to generate and execute a linting command, improving code quality by identifying patterns and anomalies.",
+	Short: "Use machine learning models to generate and execute a lint commands, improving code quality by identifying patterns and anomalies.",
 	Long:  "The 'lint' command generates a linting command based on the structure of the project's files. It then updates the '.ephemyral' configuration file with the new linting command and executes it. Use this command to ensure your project adheres to coding standards and is free from basic syntax errors.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
