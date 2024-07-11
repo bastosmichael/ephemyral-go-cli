@@ -83,7 +83,12 @@ ephemyral create [file path] [prompt] [flags]
 ### Options
 
 ```
-  -h, --help   help for create
+      --build       Run build command after creating files
+      --docs        Run docs command after creating files
+  -h, --help        help for create
+      --lint        Run lint command after creating files
+      --retry int   Number of retries for creating files (default 3)
+      --test        Run test command after creating files
 ```
 
 ### Options inherited from parent commands
@@ -205,8 +210,12 @@ ephemyral refactor [file path] [prompt] [new file path] [flags]
 ### Options
 
 ```
+      --build       Run build command after refactoring
+      --docs        Run docs command after refactoring
   -h, --help        help for refactor
+      --lint        Run lint command after refactoring
       --retry int   Number of retries for refactoring files (default 3)
+      --test        Run test command after refactoring
 ```
 
 ### Options inherited from parent commands

@@ -56,8 +56,14 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID 
 	fullPrompt := fmt.Sprintf(RefactorPromptPattern, userPrompt, fileContent)
 	gpt4client.SetDebug(false)
 	refactoredContent, err := gpt4client.GetGPT4ResponseWithPrompt(fullPrompt, convID)
-	if err != nil || strings.TrimSpace(filterOutCodeBlocks(refactoredContent)) == "" {
-		fmt.Println("Error or insufficient content from LLM:", err)
+	if err != nil {
+		fmt.Println("Error from LLM:", err)
+		return false
+	}
+
+	filteredContent := filterOutCodeBlocks(refactoredContent)
+	if strings.TrimSpace(filteredContent) == "" {
+		fmt.Println("Insufficient content from LLM after filtering.")
 		return false
 	}
 
@@ -66,7 +72,7 @@ func refactorFile(filePath, fileContent, userPrompt, newFilePath string, convID 
 		targetFilePath = filepath.Join(newFilePath, filepath.Base(filePath))
 	}
 
-	if err := os.WriteFile(targetFilePath, []byte(refactoredContent), 0644); err != nil {
+	if err := os.WriteFile(targetFilePath, []byte(filteredContent), 0644); err != nil {
 		fmt.Println("Error writing file:", err)
 		return false
 	}
