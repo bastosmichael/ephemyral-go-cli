@@ -15,6 +15,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	CONTINUATION_EXIT_PHRASE     = "AUTOMODE_COMPLETE"
+	MAX_CONTINUATION_ITERATIONS = 25
+)
+
 var createCmd = &cobra.Command{
 	Use:   "create [file path] [prompt]",
 	Short: "Employ a language model to generate new code files based on a natural language prompt. If the file path is a directory, it generates multiple AI-crafted files.",
@@ -90,7 +95,13 @@ func generateNewFile(filePath string, userPrompt string, convID uuid.UUID, retry
 			continue
 		}
 
-		if err := os.WriteFile(filePath, []byte(newFileContent), 0644); err != nil {
+		filteredContent := filterOutCodeBlocks(newFileContent)
+		if strings.TrimSpace(filteredContent) == "" {
+			fmt.Println("Filtered content is empty.")
+			continue
+		}
+
+		if err := os.WriteFile(filePath, []byte(filteredContent), 0644); err != nil {
 			fmt.Println("Error writing new file:", err)
 			continue
 		}
