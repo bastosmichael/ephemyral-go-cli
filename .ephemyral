@@ -1,3 +1,4 @@
+openai-api-key: l7dqA2lIVS6IIup5TVY4aHhtT227gLY5JSGOYL6s/kNLwTLAyA46M9X0p6l/GcmWswyVm0fdXmpgDfY4MISy6OASF1AzYzLXH+dEPv2fyGxGHbkU
 build-command: go build ./cmd ./pkg
 test-command: go test ./...
 lint-command: golangci-lint run ./cmd ./pkg

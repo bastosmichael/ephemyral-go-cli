@@ -19,7 +19,7 @@ import (
 
 const (
 	apiURL         = "https://api.openai.com/v1/chat/completions"
-	model          = "gpt-4-turbo"
+	model          = "gpt-4o"
 	roleSys        = "system"
 	roleUser       = "user"
 	roleSysContent = "You are writing software code."
@@ -70,13 +70,12 @@ func stopSpinnerFunc() {
 	spinnerDone.Wait() // Wait for the spinner goroutine to finish
 }
 
-func getAPIKey() string {
+func getAPIKey() (string, error) {
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		apiKey = "sk-proj-rXLxAWOySVtXbiQoChs0T3BlbkFJi3AZRNioTDIDnzmE3dog"
+		return "", fmt.Errorf("API key not found in environment variable 'OPENAI_API_KEY'")
 	}
-
-	return apiKey
+	return apiKey, nil
 }
 
 func preparePayload(prompt string) ([]byte, error) {
@@ -120,7 +119,10 @@ func doPostRequest(client *http.Client, payloadBytes []byte, apiKey string) (*ht
 }
 
 func GetGPT4ResponseWithPrompt(prompt string, convID uuid.UUID) (string, error) {
-	apiKey := getAPIKey() 
+	apiKey, err := getAPIKey()
+	if err != nil {
+		return "", err
+	}
 
 	payloadBytes, err := preparePayload(prompt)
 	if err != nil {
@@ -131,8 +133,8 @@ func GetGPT4ResponseWithPrompt(prompt string, convID uuid.UUID) (string, error) 
 
 	client := createHTTPClient()
 
-	startSpinner()         
-	defer stopSpinnerFunc() 
+	startSpinner()
+	defer stopSpinnerFunc()
 
 	resp, err := doPostRequest(client, payloadBytes, apiKey)
 	if err != nil {

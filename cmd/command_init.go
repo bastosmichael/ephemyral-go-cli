@@ -3,10 +3,18 @@
 package cmd
 
 import (
+	"bufio"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/sha3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -33,8 +41,33 @@ The newly created '.ephemyral' file has a default structure with placeholders fo
 }
 
 func createEphemyralFile(filename string) {
-	// Use the EphemyralFile interface to create the default content
+	reader := bufio.NewReader(os.Stdin)
+
+	// Ask for the OpenAI API key
+	fmt.Print("Enter your OpenAI API key: ")
+	apiKey, _ := reader.ReadString('\n')
+	apiKey = strings.TrimSpace(apiKey)
+
+	// Ask if the user wants to encrypt the API key
+	fmt.Print("Would you like to encrypt your API key with a passphrase? (yes/no): ")
+	encryptOption, _ := reader.ReadString('\n')
+	encryptOption = strings.TrimSpace(strings.ToLower(encryptOption))
+
+	if encryptOption == "yes" {
+		fmt.Print("Enter a passphrase for encryption: ")
+		passphrase, _ := reader.ReadString('\n')
+		passphrase = strings.TrimSpace(passphrase)
+		encryptedAPIKey, err := encrypt(apiKey, passphrase)
+		if err != nil {
+			fmt.Printf("Error encrypting API key: %v\n", err)
+			return
+		}
+		apiKey = encryptedAPIKey
+	}
+
+	// Use the EphemyralFile struct to create the default content
 	content := EphemyralFile{
+		OpenAIAPIKey: apiKey,
 		BuildCommand: "",
 		TestCommand:  "",
 		LintCommand:  "",
@@ -54,4 +87,24 @@ func createEphemyralFile(filename string) {
 		return
 	}
 	fmt.Println(".ephemyral file created")
+}
+
+func encrypt(text, passphrase string) (string, error) {
+	block, _ := aes.NewCipher([]byte(createHash(passphrase)))
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+	ciphertext := gcm.Seal(nonce, nonce, []byte(text), nil)
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func createHash(key string) string {
+	hash := sha3.New256()
+	hash.Write([]byte(key))
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil))[:32]
 }
