@@ -36,6 +36,7 @@ The newly created '.ephemyral' file has a default structure with placeholders fo
 			createEphemyralFile(filename)
 		} else {
 			fmt.Println("Ephemyral task initialized, .ephemyral file found")
+			checkAndDecryptAPIKey(filename)
 		}
 	},
 }
@@ -89,6 +90,42 @@ func createEphemyralFile(filename string) {
 	fmt.Println(".ephemyral file created")
 }
 
+func checkAndDecryptAPIKey(filename string) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Printf("Error reading .ephemyral file: %v\n", err)
+		return
+	}
+
+	var content EphemyralFile
+	if err := yaml.Unmarshal(data, &content); err != nil {
+		fmt.Printf("Error parsing .ephemyral file: %v\n", err)
+		return
+	}
+
+	apiKey := content.OpenAIAPIKey
+	reader := bufio.NewReader(os.Stdin)
+
+	// Check if the API key looks encrypted (base64 encoded string)
+	if looksLikeEncrypted(apiKey) {
+		fmt.Print("The API key appears to be encrypted. Would you like to decrypt it and display it? (yes/no): ")
+		decryptOption, _ := reader.ReadString('\n')
+		decryptOption = strings.TrimSpace(strings.ToLower(decryptOption))
+
+		if decryptOption == "yes" {
+			fmt.Print("Enter the passphrase for decryption: ")
+			passphrase, _ := reader.ReadString('\n')
+			passphrase = strings.TrimSpace(passphrase)
+			decryptedAPIKey, err := decrypt(apiKey, passphrase)
+			if err != nil {
+				fmt.Printf("Error decrypting API key: %v\n", err)
+				return
+			}
+			fmt.Printf("Decrypted API key: %s\n", decryptedAPIKey)
+		}
+	}
+}
+
 func encrypt(text, passphrase string) (string, error) {
 	block, _ := aes.NewCipher([]byte(createHash(passphrase)))
 	gcm, err := cipher.NewGCM(block)
@@ -103,8 +140,32 @@ func encrypt(text, passphrase string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
+func decrypt(encryptedText, passphrase string) (string, error) {
+	block, _ := aes.NewCipher([]byte(createHash(passphrase)))
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	encryptedData, err := base64.StdEncoding.DecodeString(encryptedText)
+	if err != nil {
+		return "", err
+	}
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := encryptedData[:nonceSize], encryptedData[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(plaintext), nil
+}
+
 func createHash(key string) string {
 	hash := sha3.New256()
 	hash.Write([]byte(key))
 	return base64.StdEncoding.EncodeToString(hash.Sum(nil))[:32]
+}
+
+func looksLikeEncrypted(text string) bool {
+	_, err := base64.StdEncoding.DecodeString(text)
+	return err == nil
 }
