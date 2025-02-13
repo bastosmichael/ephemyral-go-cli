@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -81,13 +81,13 @@ jobs:
         shell: bash
 
       - name: Upload Documentation and README Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation-${{ runner.os }}-${{ matrix.arch }}
           path: documentation-${{ runner.os }}-${{ matrix.arch }}.zip
 
       - name: Create Release Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ephemyral-${{ runner.os }}-${{ matrix.arch }}
           path: ephemyral-${{ runner.os }}-${{ matrix.arch }}
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -131,97 +131,97 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Download Release Artifact (macOS - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-macOS-amd64
           path: macos
 
       - name: Download Release Artifact (macOS - arm64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-macOS-arm64
           path: macos
 
       - name: Download Release Artifact (macOS - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-macOS-386
           path: macos
 
       - name: Download Release Artifact (Linux - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-Linux-amd64
           path: ubuntu
 
       - name: Download Release Artifact (Linux - arm64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-Linux-arm64
           path: ubuntu
 
       - name: Download Release Artifact (Linux - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-Linux-386
           path: ubuntu
 
       - name: Download Release Artifact (Windows - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-Windows-amd64
           path: windows
 
       - name: Download Release Artifact (Windows - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ephemyral-Windows-386
           path: windows
 
       - name: Download Documentation Artifact (macOS - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-macOS-amd64
           path: macos
 
       - name: Download Documentation Artifact (macOS - arm64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-macOS-arm64
           path: macos
 
       - name: Download Documentation Artifact (macOS - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-macOS-386
           path: macos
 
       - name: Download Documentation Artifact (Linux - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-Linux-amd64
           path: ubuntu
 
       - name: Download Documentation Artifact (Linux - arm64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-Linux-arm64
           path: ubuntu
 
       - name: Download Documentation Artifact (Linux - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-Linux-386
           path: ubuntu
 
       - name: Download Documentation Artifact (Windows - amd64)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-Windows-amd64
           path: windows
 
       - name: Download Documentation Artifact (Windows - 386)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation-Windows-386
           path: windows
