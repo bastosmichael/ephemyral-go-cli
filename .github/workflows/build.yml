@@ -50,9 +50,6 @@ jobs:
           - os: windows-latest
             arch: arm64
     runs-on: ${{ matrix.os }}
-    concurrency:
-      group: build-upload-${{ matrix.os }}-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
