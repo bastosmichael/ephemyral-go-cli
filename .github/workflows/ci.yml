@@ -11,6 +11,9 @@ jobs:
   build-and-test:
     name: 'Build, Test, Lint, and Docs 🚀'
     runs-on: ubuntu-latest
+    concurrency:
+      group: build-lint-test-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout

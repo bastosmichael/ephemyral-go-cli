@@ -15,6 +15,9 @@ jobs:
   build-and-test:
     name: "Build and Test 🚀"
     runs-on: ubuntu-latest
+    concurrency:
+      group: build-test-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +50,9 @@ jobs:
           - os: windows-latest
             arch: arm64
     runs-on: ${{ matrix.os }}
+    concurrency:
+      group: build-upload-${{ matrix.os }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -95,6 +101,9 @@ jobs:
   tag-and-release-and-upload:
     needs: build-and-upload
     runs-on: ubuntu-latest
+    concurrency:
+      group: tag-release-upload-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
