@@ -46,18 +46,17 @@ jobs:
           # echo "Linting..."
           # golangci-lint run ./cmd ./pkg
           
-  dependabot-auto-merge:
-    name: 'Dependabot Auto Merge'
+  dependabot:
+    name: Dependabot
     needs: [build-and-test]
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
     steps:
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v1.6.0
+        uses: dependabot/fetch-metadata@v2.2.0
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
-
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --merge "$PR_URL"
         env:
